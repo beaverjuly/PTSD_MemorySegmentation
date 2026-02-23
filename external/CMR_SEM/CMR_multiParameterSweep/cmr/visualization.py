@@ -218,7 +218,6 @@ def plot_directional_lag_rates(sweep_results, param_grid, param_name,
     fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax).set_label(param_name)
     plt.show()
 
-
 # -- Unconditional |lag| summaries ------------------------------------
 
 def _sweep_unconditional_abs(sweep_results, param_grid, large_lag_thresh=4):
@@ -509,3 +508,30 @@ def plot_w_fc_forward_backward_lag_asymmetry_sweep(
     cax = fig.add_axes([0.93, 0.15, 0.015, 0.7])
     fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), cax=cax).set_label(param_name)
     plt.show()
+
+# --- Cross-parameter panel runners (thin wrappers; reuse existing plot functions) ---
+
+
+def panel_core_behavior(sweep_results, param_grid, param_label, cmap_name="viridis"):
+    """Recall accuracy + SPC + PFR + lag-CRP."""
+    plot_recall_accuracy(sweep_results, param_grid, param_label=param_label, cmap_name=cmap_name)
+    plot_spc_sweep(sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name)
+    plot_pfr_heatmap(sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name)
+    plot_lag_crp_sweep(sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name)
+
+def panel_lag_rates_and_summaries(sweep_results, param_grid, param_label, large_lag_thresh=4, cmap_name="viridis"):
+    """Conditional directional lag rates + unconditional lag summaries."""
+    plot_directional_lag_rates(
+        sweep_results, param_grid, param_label=param_label,
+        large_lag_thresh=large_lag_thresh, cmap_name=cmap_name
+    )
+    plot_unconditional_lag_summaries(
+        sweep_results, param_grid, param_label=param_label,
+        large_lag_thresh=large_lag_thresh, cmap_name=cmap_name
+    )
+
+def panel_lag_crp_diagnostics(sweep_results, param_grid, param_label, cmap_name="viridis"):
+    """Lag-CRP + denominator/opportunities + numerator/observed transitions."""
+    plot_lag_crp_diagnostics(
+        sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name
+    )
