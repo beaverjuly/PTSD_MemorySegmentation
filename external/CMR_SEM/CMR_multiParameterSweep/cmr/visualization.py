@@ -511,27 +511,24 @@ def plot_w_fc_forward_backward_lag_asymmetry_sweep(
 
 # --- Cross-parameter panel runners (thin wrappers; reuse existing plot functions) ---
 
-
-def panel_core_behavior(sweep_results, param_grid, param_label, cmap_name="viridis"):
+def panel_core_behavior(sweep_results, param_grid, param_name, cmap_name="viridis"):
     """Recall accuracy + SPC + PFR + lag-CRP."""
-    plot_recall_accuracy(sweep_results, param_grid, param_label=param_label, cmap_name=cmap_name)
-    plot_spc_sweep(sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name)
-    plot_pfr_heatmap(sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name)
-    plot_lag_crp_sweep(sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name)
+    plot_recall_accuracy(sweep_results, param_grid, param_name=param_name, cmap_name=cmap_name)
+    plot_spc_sweep(sweep_results, param_grid, param_name=param_name, cmap_name=cmap_name)
+    plot_pfr_heatmap(sweep_results, param_grid, param_name=param_name, cmap_name=cmap_name)
+    plot_lag_crp_sweep(sweep_results, param_grid, param_name=param_name, cmap_name=cmap_name)
 
-def panel_lag_rates_and_summaries(sweep_results, param_grid, param_label, large_lag_thresh=4, cmap_name="viridis"):
+def panel_lag_rates_and_summaries(sweep_results, param_grid, param_name, large_lag_thresh=4, cmap_name="viridis"):
     """Conditional directional lag rates + unconditional lag summaries."""
     plot_directional_lag_rates(
-        sweep_results, param_grid, param_label=param_label,
+        sweep_results, param_grid, param_name=param_name,
         large_lag_thresh=large_lag_thresh, cmap_name=cmap_name
     )
     plot_unconditional_lag_summaries(
-        sweep_results, param_grid, param_label=param_label,
+        sweep_results, param_grid, param_name=param_name,
         large_lag_thresh=large_lag_thresh, cmap_name=cmap_name
     )
 
-def panel_lag_crp_diagnostics(sweep_results, param_grid, param_label, cmap_name="viridis"):
+def panel_lag_crp_diagnostics(sweep_results, param_grid, param_name, cmap_name="viridis"):
     """Lag-CRP + denominator/opportunities + numerator/observed transitions."""
-    plot_lag_crp_diagnostics(
-        sweep_results, param_grid, param_name=param_label, cmap_name=cmap_name
-    )
+    plot_lag_crp_diagnostics(sweep_results, param_grid, param_name=param_name, cmap_name=cmap_name)
