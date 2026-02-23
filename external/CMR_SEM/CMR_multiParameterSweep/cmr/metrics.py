@@ -5,7 +5,8 @@ Pure behavioral readouts from recall sequences: SPC, PFR, lag-CRP (with
 counts), conditional forward & backward lag rates, unconditional transition
 summaries, and recall accuracy.
 
-Everything here depends only on ``recall_sims`` / ``times_sims`` 
+Everything here depends only on ``recall_sims`` / ``times_sims`` — no
+model-internal quantities.
 """
 
 import numpy as np

@@ -171,7 +171,6 @@ def compute_item_evidence_asymmetry(B_rec, n_sims=500, seed=2026,
 # Sweep-level convenience extractors
 # ─────────────────────────────────────────────────────────────────────
 
-
 def item_evidence_asymmetry_means(sweep_results, param_grid):
     """E[Δf], E[Δf | ℓ=+1], E[Δf | ℓ=−1] aligned with param_grid."""
     param_grid = np.asarray(param_grid, dtype=float)

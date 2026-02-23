@@ -11,10 +11,10 @@ from any single trial is representative.
 
 Key quantities
 --------------
-* **Band-strength profile** — mean absolute weight at each
-  serial-position lag δ ∈ {−(N−1), …, N−1}.  The lag-0 band is the
-  diagonal (self-association), lag +1 is the forward-neighbor band, etc.
-* **Forward / backward neighbor-band asymmetry** —
+* **Lag-strength profile** — mean absolute weight at each
+  serial-position lag δ ∈ {−(N−1), …, N−1}.  The lag-0 entry is the
+  diagonal (self-association), lag +1 is the forward-neighbor, etc.
+* **Forward / backward lag asymmetry** —
   mean(|W_sp[i, i+1]|) − mean(|W_sp[i, i−1]|) for the remapped matrix.
 * **Matrix norms** — Frobenius norm and mean absolute weight,
   summarising overall association strength.
@@ -47,10 +47,10 @@ def remap_to_serial_position_space(W, pres_indices=pres_indices, N=N):
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Band-strength profile
+# Lag-strength profile
 # ─────────────────────────────────────────────────────────────────────
 
-def band_strength_profile(W_sp, N=N, absolute=True):
+def lag_strength_profile(W_sp, N=N, absolute=True):
     """
     Mean weight at each serial-position lag δ.
 
@@ -67,14 +67,14 @@ def band_strength_profile(W_sp, N=N, absolute=True):
     Returns
     -------
     lags   : array of ints −(N−1) … (N−1)
-    means  : corresponding mean weight per band
+    means  : corresponding mean weight per lag
     """
     lags_out = []
     means_out = []
     for delta in range(-(N - 1), N):
         vals = []
         for i in range(N):
-            j = i + delta          # sp_f = sp_c + delta
+            j = i + delta
             if 0 <= j < N:
                 vals.append(abs(W_sp[i, j]) if absolute else W_sp[i, j])
         lags_out.append(delta)
@@ -83,20 +83,21 @@ def band_strength_profile(W_sp, N=N, absolute=True):
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Forward / backward neighbor-band asymmetry
+# Forward / backward lag asymmetry of W_FC
 # ─────────────────────────────────────────────────────────────────────
 
-def neighbor_band_asymmetry(W_sp, N=N, absolute=True):
+def compute_w_fc_forward_backward_lag_asymmetry(W_sp, N=N, absolute=True):
     """
-    Forward-minus-backward neighbor-band mean.
+    Forward-minus-backward neighbor-lag mean of a weight matrix
+    in serial-position space.
 
     Returns
     -------
-    fwd_mean : float — mean of band at δ = +1
-    bwd_mean : float — mean of band at δ = −1
+    fwd_mean  : float — mean of lag δ = +1
+    bwd_mean  : float — mean of lag δ = −1
     asymmetry : float — fwd_mean − bwd_mean
     """
-    def _band_mean(delta):
+    def _lag_mean(delta):
         vals = []
         for i in range(N):
             j = i + delta
@@ -104,8 +105,8 @@ def neighbor_band_asymmetry(W_sp, N=N, absolute=True):
                 vals.append(abs(W_sp[i, j]) if absolute else W_sp[i, j])
         return np.mean(vals) if vals else 0.0
 
-    fwd = _band_mean(+1)
-    bwd = _band_mean(-1)
+    fwd = _lag_mean(+1)
+    bwd = _lag_mean(-1)
     return fwd, bwd, fwd - bwd
 
 
@@ -117,7 +118,7 @@ def matrix_norms(W):
     """
     Returns
     -------
-    frob  : float — Frobenius norm ‖W‖_F
+    frob     : float — Frobenius norm ‖W‖_F
     mean_abs : float — mean |W_ij|
     """
     return float(np.linalg.norm(W, 'fro')), float(np.mean(np.abs(W)))
@@ -150,14 +151,14 @@ def sweep_matrix_norms(sweep_results, param_grid, matrix_key="net_w_fc"):
     return frob_arr, mabs_arr
 
 
-def sweep_band_profiles(sweep_results, param_grid, matrix_key="net_w_fc",
-                        absolute=True):
+def sweep_w_fc_lag_strength_profile(sweep_results, param_grid,
+                                    matrix_key="net_w_fc", absolute=True):
     """
-    Band-strength profiles for every grid value.
+    Lag-strength profiles for every grid value.
 
     Returns
     -------
-    lags : (2N−1,) int array
+    lags     : (2N−1,) int array
     profiles : (len(param_grid), 2N−1) float array
     """
     param_grid = np.asarray(param_grid, dtype=float)
@@ -167,17 +168,17 @@ def sweep_band_profiles(sweep_results, param_grid, matrix_key="net_w_fc",
         entry = _get_sweep_entry(sweep_results, v)
         W = entry.get(matrix_key)
         W_sp = remap_to_serial_position_space(W)
-        l, m = band_strength_profile(W_sp, absolute=absolute)
+        l, m = lag_strength_profile(W_sp, absolute=absolute)
         if lags is None:
             lags = l
         profiles.append(m)
     return lags, np.vstack(profiles)
 
 
-def sweep_neighbor_band_asymmetry(sweep_results, param_grid,
-                                  matrix_key="net_w_fc", absolute=True):
+def sweep_w_fc_forward_backward_lag_asymmetry(
+        sweep_results, param_grid, matrix_key="net_w_fc", absolute=True):
     """
-    Forward & backward neighbor-band means and asymmetry across a sweep.
+    Forward & backward neighbor-lag means and asymmetry across a sweep.
 
     Returns
     -------
@@ -191,7 +192,8 @@ def sweep_neighbor_band_asymmetry(sweep_results, param_grid,
         entry = _get_sweep_entry(sweep_results, v)
         W = entry.get(matrix_key)
         W_sp = remap_to_serial_position_space(W)
-        f, b, a = neighbor_band_asymmetry(W_sp, absolute=absolute)
+        f, b, a = compute_w_fc_forward_backward_lag_asymmetry(
+            W_sp, absolute=absolute)
         fwd_arr[i], bwd_arr[i], asym_arr[i] = f, b, a
     return fwd_arr, bwd_arr, asym_arr
 

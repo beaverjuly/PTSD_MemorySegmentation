@@ -3,11 +3,13 @@ CMR Multi-Parameter Sweep — Visualization
 ==========================================
 All plotting routines, organized by category:
 
-1. **Mandatory behavioral readouts** — produced for every sweep.
-2. **Recall-stage diagnostics** — context-update traces, evidence
+1. **Shared helpers** — color palettes, split-lag lines, colorbars.
+2. **Behavioral metric plots** — recall accuracy, SPC, PFR, lag-CRP,
+   conditional directional lag rates, unconditional lag summaries.
+3. **Recall-stage diagnostic plots** — context-update traces, evidence
    profiles, item-evidence asymmetry, FC-alignment asymmetry.
-3. **Encoding-stage diagnostics** — matrix band profiles, norms,
-   neighbor-band asymmetry.
+4. **Encoding-stage diagnostic plots** — lag-strength profiles, matrix
+   norms, forward/backward lag asymmetry.
 """
 
 import numpy as np
@@ -33,13 +35,13 @@ from .diagnostics_recall import (
 )
 from .diagnostics_encoding import (
     sweep_matrix_norms,
-    sweep_band_profiles,
-    sweep_neighbor_band_asymmetry,
+    sweep_w_fc_lag_strength_profile,
+    sweep_w_fc_forward_backward_lag_asymmetry,
 )
 
 
 # =====================================================================
-#  Color palette helpers
+#  1. SHARED HELPERS
 # =====================================================================
 
 def make_sweep_colors(param_grid, cmap_name="viridis"):
@@ -59,12 +61,21 @@ def _add_colorbar(fig, ax_or_axs, norm, cmap, label):
 
 
 def line_with_colored_points(ax, x, y, colors):
+    """Neutral line + colored scatter encoding parameter value."""
     ax.plot(x, y, linewidth=1.0, alpha=0.6)
     ax.scatter(x, y, c=colors, s=50, edgecolor="none")
 
 
+def plot_split_lags(ax, lags, y, color, marker="o", **kw):
+    """Plot lag curve with negative and positive halves disconnected."""
+    lags, y = np.asarray(lags), np.asarray(y)
+    for mask in [lags < 0, lags > 0]:
+        if mask.any():
+            ax.plot(lags[mask], y[mask], marker=marker, color=color, **kw)
+
+
 # =====================================================================
-#  1. BEHAVIORAL READOUTS
+#  2. BEHAVIORAL METRIC PLOTS
 # =====================================================================
 
 # -- Recall accuracy --------------------------------------------------
@@ -87,7 +98,7 @@ def plot_recall_accuracy(sweep_results, param_grid, param_name,
         sweep_results, param_grid,
         lambda rs: recall_accuracy(rs, N=N, unique=True))
 
-    fig, ax = plt.subplots(figsize=(7.2, 4))
+    fig, ax = plt.subplots(figsize=(6.5, 4))
     line_with_colored_points(ax, param_grid, y, colors)
     ax.set_title(f"Recall accuracy vs {param_name}")
     ax.set_xlabel(param_name)
@@ -104,7 +115,7 @@ def plot_pfr_heatmap(sweep_results, param_grid, param_name="Parameter",
     param_grid = np.asarray(param_grid, dtype=float)
     M = np.zeros((len(param_grid), N))
     for i, val in enumerate(param_grid):
-        M[i, :] = sweep_results[val]["PFR"]
+        M[i, :] = _get_sweep_entry(sweep_results, val)["PFR"]
 
     fig, ax = plt.subplots(figsize=(8, 5))
     im = ax.imshow(M, aspect="auto", origin="lower", cmap=cmap_name,
@@ -132,7 +143,8 @@ def plot_spc_sweep(sweep_results, param_grid, param_name="Parameter",
 
     fig, ax = plt.subplots(figsize=(8, 5))
     for val, c in zip(param_grid, colors):
-        ax.plot(sp, sweep_results[val]["SPC"], marker="o", color=c)
+        ax.plot(sp, _get_sweep_entry(sweep_results, val)["SPC"],
+                marker="o", color=c)
     ax.set_title(f"Serial Position Curve across {param_name}")
     ax.set_xlabel("Serial Position"); ax.set_ylabel("P(Recall)")
     ax.set_ylim(0, 1.05); ax.grid(alpha=0.3)
@@ -142,13 +154,6 @@ def plot_spc_sweep(sweep_results, param_grid, param_name="Parameter",
 
 # -- lag-CRP sweep (split negative / positive) -----------------------
 
-def _plot_split_lags(ax, lags, y, color, marker="o", **kw):
-    lags, y = np.asarray(lags), np.asarray(y)
-    for mask in [lags < 0, lags > 0]:
-        if mask.any():
-            ax.plot(lags[mask], y[mask], marker=marker, color=color, **kw)
-
-
 def plot_lag_crp_sweep(sweep_results, param_grid, param_name="Parameter",
                        cmap_name="viridis"):
     param_grid = np.asarray(param_grid, dtype=float)
@@ -156,8 +161,9 @@ def plot_lag_crp_sweep(sweep_results, param_grid, param_name="Parameter",
 
     fig, ax = plt.subplots(figsize=(8, 5))
     for val, c in zip(param_grid, colors):
-        lv, crp = compute_lag_crp(sweep_results[val]["recall_sims"], N)
-        _plot_split_lags(ax, lv, crp, color=c)
+        rs = _get_sweep_entry(sweep_results, val)["recall_sims"]
+        lv, crp = compute_lag_crp(rs, N)
+        plot_split_lags(ax, lv, crp, color=c)
     ax.axvline(0, color="gray", ls="--", alpha=0.5)
     ax.set_title(f"Lag-CRP across {param_name}")
     ax.set_xlabel("Lag (next − current)"); ax.set_ylabel("CRP")
@@ -250,35 +256,8 @@ def plot_unconditional_lag_summaries(sweep_results, param_grid, param_name,
     plt.show()
 
 
-# -- all readouts in one call ------------------
-
-def plot_all_behavioral_readouts(sweep_results, param_grid, param_name,
-                                  N=N, large_lag_thresh=4,
-                                  cmap_name="viridis"):
-    """
-    Produce the full mandatory behavioral readout suite:
-
-    1. Recall accuracy
-    2. SPC
-    3. PFR heatmap
-    4. Lag-CRP (split ℓ < 0 / ℓ > 0)
-    5. Conditional forward & backward lag rates (4-panel)
-    6. Unconditional |ℓ| summaries (3-panel)
-    """
-    plot_recall_accuracy(sweep_results, param_grid, param_name, cmap_name)
-    plot_spc_sweep(sweep_results, param_grid, param_name, cmap_name)
-    plot_pfr_heatmap(sweep_results, param_grid, param_name, cmap_name)
-    plot_lag_crp_sweep(sweep_results, param_grid, param_name, cmap_name)
-    plot_directional_lag_rates(sweep_results, param_grid, param_name,
-                                N=N, large_lag_thresh=large_lag_thresh,
-                                cmap_name=cmap_name)
-    plot_unconditional_lag_summaries(sweep_results, param_grid, param_name,
-                                     large_lag_thresh=large_lag_thresh,
-                                     cmap_name=cmap_name)
-
-
 # =====================================================================
-#  2. RECALL-STAGE DIAGNOSTIC PLOTS
+#  3. RECALL-STAGE DIAGNOSTIC PLOTS
 # =====================================================================
 
 # -- lag-CRP diagnostics (CRP + num + den) ----------------------------
@@ -290,11 +269,11 @@ def plot_lag_crp_diagnostics(sweep_results, param_grid,
 
     fig, axs = plt.subplots(3, 1, figsize=(9, 10), sharex=True)
     for val, c in zip(param_grid, colors):
-        rs = sweep_results[val]["recall_sims"]
+        rs = _get_sweep_entry(sweep_results, val)["recall_sims"]
         lags, crp, num, den = lag_crp_with_counts(rs, N)
-        _plot_split_lags(axs[0], lags, crp, c)
-        _plot_split_lags(axs[1], lags, den, c)
-        _plot_split_lags(axs[2], lags, num, c)
+        plot_split_lags(axs[0], lags, crp, c)
+        plot_split_lags(axs[1], lags, den, c)
+        plot_split_lags(axs[2], lags, num, c)
 
     axs[0].axvline(0, color="gray", ls="--", alpha=0.5)
     axs[0].set_ylabel("CRP"); axs[0].set_title(f"Lag-CRP across {param_name}")
@@ -322,7 +301,7 @@ def plot_item_evidence_asymmetry_paired(
         1, 2, figsize=(13, 4.5), constrained_layout=True)
 
     for pv, c in zip(param_grid, colors):
-        d = sweep_results[pv]["item_evidence_diag"]
+        d = _get_sweep_entry(sweep_results, pv)["item_evidence_diag"]
         means = [np.mean(d["deltas_by_pos"].get(p, [np.nan])) for p in positions]
         ax_pos.plot(positions, means, marker="o", color=c, ms=4)
     ax_pos.axhline(0, ls="--", alpha=0.6)
@@ -332,8 +311,8 @@ def plot_item_evidence_asymmetry_paired(
     ax_pos.grid(alpha=0.3)
 
     adv = np.array([
-        np.mean(sweep_results[v]["item_evidence_diag"]["deltas_all"])
-        if sweep_results[v]["item_evidence_diag"]["deltas_all"] else np.nan
+        np.mean(_get_sweep_entry(sweep_results, v)["item_evidence_diag"]["deltas_all"])
+        if _get_sweep_entry(sweep_results, v)["item_evidence_diag"]["deltas_all"] else np.nan
         for v in param_grid], dtype=float)
     ax_pool.plot(param_grid, adv, lw=1, alpha=0.5)
     ax_pool.scatter(param_grid, adv, c=param_grid, cmap=cmap, norm=norm, s=50)
@@ -445,7 +424,7 @@ def plot_scalar_metric_vs_param(sweep_results, param_grid, param_label,
     colors, norm, cmap = make_sweep_colors(param_grid, cmap_name)
     y = _sweep_scalar_metric_array(sweep_results, param_grid, metric_fn)
 
-    fig, ax = plt.subplots(figsize=(7.2, 4))
+    fig, ax = plt.subplots(figsize=(6.5, 4))
     line_with_colored_points(ax, param_grid, y, colors)
     ax.set_title(title); ax.set_xlabel(param_label); ax.set_ylabel(y_label)
     ax.grid(alpha=0.3)
@@ -454,23 +433,24 @@ def plot_scalar_metric_vs_param(sweep_results, param_grid, param_label,
 
 
 # =====================================================================
-#  3. ENCODING-STAGE DIAGNOSTIC PLOTS
+#  4. ENCODING-STAGE DIAGNOSTIC PLOTS
 # =====================================================================
 
-def plot_matrix_band_profiles(sweep_results, param_grid, param_name,
-                               matrix_key="net_w_fc", cmap_name="viridis"):
-    """Band-strength profile (mean |weight| at each SP lag) across sweep."""
+def plot_w_fc_lag_strength_profile_sweep(
+        sweep_results, param_grid, param_name,
+        matrix_key="net_w_fc", cmap_name="viridis"):
+    """Lag-strength profile (mean |weight| at each SP lag) across sweep."""
     param_grid = np.asarray(param_grid, dtype=float)
     colors, norm, cmap = make_sweep_colors(param_grid, cmap_name)
-    lags, profiles = sweep_band_profiles(sweep_results, param_grid,
-                                          matrix_key=matrix_key)
+    lags, profiles = sweep_w_fc_lag_strength_profile(
+        sweep_results, param_grid, matrix_key=matrix_key)
     matrix_label = r"$M_{FC}$" if "fc" in matrix_key else r"$M_{CF}$"
 
     fig, ax = plt.subplots(figsize=(8, 5))
     for prof, c in zip(profiles, colors):
-        _plot_split_lags(ax, lags, prof, color=c)
+        plot_split_lags(ax, lags, prof, color=c)
     ax.axvline(0, color="gray", ls="--", alpha=0.5)
-    ax.set_title(f"{matrix_label} band-strength profile across {param_name}")
+    ax.set_title(f"{matrix_label} lag-strength profile across {param_name}")
     ax.set_xlabel(r"serial-position lag $\delta$")
     ax.set_ylabel("mean |weight|"); ax.grid(alpha=0.3)
     _add_colorbar(fig, ax, norm, cmap, param_name)
@@ -500,28 +480,28 @@ def plot_matrix_norms_sweep(sweep_results, param_grid, param_name,
     plt.show()
 
 
-def plot_neighbor_band_asymmetry_sweep(
+def plot_w_fc_forward_backward_lag_asymmetry_sweep(
         sweep_results, param_grid, param_name,
         matrix_key="net_w_fc", cmap_name="viridis"):
-    """Forward vs backward neighbor-band mean + asymmetry across sweep."""
+    """Forward vs backward lag mean + asymmetry of W_FC across sweep."""
     param_grid = np.asarray(param_grid, dtype=float)
     colors, norm, cmap = make_sweep_colors(param_grid, cmap_name)
-    fwd, bwd, asym = sweep_neighbor_band_asymmetry(
+    fwd, bwd, asym = sweep_w_fc_forward_backward_lag_asymmetry(
         sweep_results, param_grid, matrix_key=matrix_key)
     matrix_label = r"$M_{FC}$" if "fc" in matrix_key else r"$M_{CF}$"
 
     fig, axs = plt.subplots(1, 3, figsize=(14, 4), sharex=True)
     line_with_colored_points(axs[0], param_grid, fwd, colors)
-    axs[0].set_title(rf"Fwd neighbor band ($\delta\!=\!+1$) of {matrix_label}")
+    axs[0].set_title(rf"Fwd lag ($\delta\!=\!+1$) of {matrix_label}")
     axs[0].set_ylabel("mean |weight|"); axs[0].grid(alpha=0.3)
 
     line_with_colored_points(axs[1], param_grid, bwd, colors)
-    axs[1].set_title(rf"Bwd neighbor band ($\delta\!=\!-1$) of {matrix_label}")
+    axs[1].set_title(rf"Bwd lag ($\delta\!=\!-1$) of {matrix_label}")
     axs[1].set_ylabel("mean |weight|"); axs[1].grid(alpha=0.3)
 
     line_with_colored_points(axs[2], param_grid, asym, colors)
     axs[2].axhline(0, ls="--", alpha=0.5)
-    axs[2].set_title(rf"Neighbor band asymmetry of {matrix_label}")
+    axs[2].set_title(rf"Fwd−Bwd lag asymmetry of {matrix_label}")
     axs[2].set_ylabel("fwd − bwd"); axs[2].grid(alpha=0.3)
 
     for a in axs: a.set_xlabel(param_name)
