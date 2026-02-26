@@ -1,3 +1,4 @@
+
 """
 CMR Multi-Parameter Sweep — Simulation Functions
 =================================================
@@ -76,7 +77,8 @@ def simulate_single_trial(
           where  c_in(j) = M_FC · f_j / ‖M_FC · f_j‖.
 
         * **trace** — per-recall-step internal quantities: radicand,
-          dot product, rho, context norm, cosine similarity, and
+          dot product, rho, context norm, cosine similarity,
+          context-input raw norm, naive-mixture gain, and
           per-retrieval-attempt evidence summaries.
     recency_k : int
         How many final serial positions count as "recency" for the
@@ -171,6 +173,7 @@ def simulate_single_trial(
         trace = {
             "dot": [], "rad": [], "rho": [],
             "c_norm": [], "cos_after": [],
+            "c_in_raw_norm": [], "c_star_norm": [],
             "f_max": [], "f_entropy": [], "f_recency_mass": [],
             "f_mean_by_pos": None,
             "f_mean_centered_by_pos": None,
@@ -269,15 +272,22 @@ def simulate_single_trial(
             net_f[:] = 0
             net_f[winner] = 1
 
-            # context input through M_FC
+            # context input through M_FC — capture raw norm before
+            # normalization for the c_in_raw_norm diagnostic
             net_c_in = net_w_fc @ net_f
-            net_c_in = net_c_in / _norm(net_c_in)
+            c_in_raw_norm_val = _norm(net_c_in)
+            net_c_in = net_c_in / c_in_raw_norm_val
 
             # retrieval context update
             c_in, c = net_c_in, net_c
             dot_val = _dot(c, c_in)
             rad_val = 1.0 + (B_rec**2) * ((dot_val**2) - 1.0)
             rho_val = np.sqrt(rad_val) - B_rec * dot_val
+
+            # naive linear-mixture diagnostic: ||(1−B_rec)c + B_rec * c_in||
+            if record_diagnostics:
+                c_star = (1.0 - B_rec) * c + B_rec * c_in
+                c_star_norm_val = _norm(c_star)
 
             net_c = rho_val * c + B_rec * c_in
 
@@ -293,6 +303,8 @@ def simulate_single_trial(
                     trace["cos_after"].append(_dot(net_c, c_in) / (c_norm_val * cin_norm))
                 else:
                     trace["cos_after"].append(np.nan)
+                trace["c_in_raw_norm"].append(float(c_in_raw_norm_val))
+                trace["c_star_norm"].append(float(c_star_norm_val))
 
             # weight updates during retrieval (both lr == 0 by default)
             net_w_fc += (net_c @ net_f.T) * lrate_fc_rec
