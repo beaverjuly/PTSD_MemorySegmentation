@@ -1,20 +1,20 @@
 """
-CMR Multi-Parameter Sweep — Behavioral Analysis Metrics
+CMR Multi-Parameter Sweep -- Behavioral Analysis Metrics
 ========================================================
 Pure behavioral readouts from recall sequences: SPC, PFR, lag-CRP (with
 counts), conditional forward & backward lag rates, unconditional transition
 summaries, and recall accuracy.
 
-Everything here depends only on ``recall_sims`` / ``times_sims`` — no
+Everything here depends only on ``recall_sims`` / ``times_sims`` -- no
 model-internal quantities.
 """
 
 import numpy as np
 
 
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 # SPC, PFR, lag-CRP (basic)
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 
 def compute_spc(recall_sims, N):
     """Serial Position Curve: P(item at position j is recalled)."""
@@ -63,18 +63,18 @@ def compute_lag_crp(recall_sims, N):
     return lag_vals, crp
 
 
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 # lag-CRP with numerator / denominator counts (excluding lag 0)
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 
 def lag_crp_with_counts(recall_sims, N):
     """
     Returns
     -------
-    lags : array  — lags -(N-1)…(N-1) excluding 0
-    crp  : array  — conditional transition probabilities
-    num  : array  — numerator (observed transitions)
-    den  : array  — denominator (available opportunities)
+    lags : array  -- lags -(N-1)...(N-1) excluding 0
+    crp  : array  -- conditional transition probabilities
+    num  : array  -- numerator (observed transitions)
+    den  : array  -- denominator (available opportunities)
     """
     lag_list = [l for l in range(-(N - 1), N) if l != 0]
     idx = {l: i for i, l in enumerate(lag_list)}
@@ -103,9 +103,9 @@ def lag_crp_with_counts(recall_sims, N):
     return np.array(lag_list), crp, num, den
 
 
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 # Conditional FORWARD lag scalar summaries  (opportunity-corrected)
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 
 def conditional_forward_lag_rates(lags, num, den, large_lag_thresh=4):
     """
@@ -113,8 +113,8 @@ def conditional_forward_lag_rates(lags, num, den, large_lag_thresh=4):
 
     Returns
     -------
-    p_plus_one    : P(ℓ = +1 | opportunity)
-    p_large_fwd   : P(ℓ ≥ k  | opportunity)
+    p_plus_one    : P(l = +1 | opportunity)
+    p_large_fwd   : P(l >= k  | opportunity)
     """
     lags = np.asarray(lags, dtype=int)
     num, den = np.asarray(num, dtype=float), np.asarray(den, dtype=float)
@@ -129,9 +129,9 @@ def conditional_forward_lag_rates(lags, num, den, large_lag_thresh=4):
     return p_plus_one, p_large_fwd
 
 
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 # Conditional BACKWARD lag scalar summaries  (opportunity-corrected)
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 
 def conditional_backward_lag_rates(lags, num, den, large_lag_thresh=4):
     """
@@ -139,8 +139,8 @@ def conditional_backward_lag_rates(lags, num, den, large_lag_thresh=4):
 
     Returns
     -------
-    p_minus_one   : P(ℓ = −1 | opportunity)
-    p_large_bwd   : P(ℓ ≤ −k | opportunity)
+    p_minus_one   : P(l = -1 | opportunity)
+    p_large_bwd   : P(l <= -k | opportunity)
     """
     lags = np.asarray(lags, dtype=int)
     num, den = np.asarray(num, dtype=float), np.asarray(den, dtype=float)
@@ -155,12 +155,12 @@ def conditional_backward_lag_rates(lags, num, den, large_lag_thresh=4):
     return p_minus_one, p_large_bwd
 
 
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 # Unconditional (observed) transition helpers
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 
 def get_lags_from_recall_sims(recall_sims):
-    """All observed lags (next − current), pooled over trials, excluding 0."""
+    """All observed lags (next - current), pooled over trials, excluding 0."""
     lags = []
     for s in range(recall_sims.shape[1]):
         seq = recall_sims[:, s]
@@ -177,9 +177,9 @@ def unconditional_transition_summaries(recall_sims, large_lag_thresh=4):
 
     Returns
     -------
-    p_abs1      : P(|ℓ| = 1)
-    p_abs_ge_k  : P(|ℓ| ≥ k)
-    mean_abs    : E[|ℓ|]
+    p_abs1      : P(|l| = 1)
+    p_abs_ge_k  : P(|l| >= k)
+    mean_abs    : E[|l|]
     """
     lags = get_lags_from_recall_sims(recall_sims)
     lags = lags[lags != 0]
@@ -189,9 +189,9 @@ def unconditional_transition_summaries(recall_sims, large_lag_thresh=4):
     return float(np.mean(al == 1)), float(np.mean(al >= large_lag_thresh)), float(np.mean(al))
 
 
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 # Recall accuracy
-# ─────────────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------
 
 def recall_accuracy(recall_sims, N, unique=True):
     """E[#unique_recalled / N] across simulations."""
@@ -208,3 +208,66 @@ def recall_accuracy(recall_sims, N, unique=True):
             seq = np.unique(seq)
         acc.append(len(seq) / float(N))
     return float(np.mean(acc)) if acc else np.nan
+
+
+# ---------------------------------------------------------------------
+# Conditional ABSOLUTE-VALUE lag summaries  (opportunity-corrected 1)
+# ---------------------------------------------------------------------
+
+def conditional_abs_lag_summaries(lags, num, den, large_lag_thresh=4):
+    """
+    Opportunity-corrected absolute-value lag summaries derived from lag-CRP counts.
+
+    Inputs come from `lag_crp_with_counts(recall_sims, N)`:
+        - lags: signed lag bins (excluding 0)
+        - num : observed transition counts per signed lag bin
+        - den : opportunity counts per signed lag bin
+
+    We pool over sign to form absolute-distance quantities:
+        num_abs(d) = num(+d) + num(-d)
+        den_abs(d) = den(+d) + den(-d)
+
+    Then compute the two scalar summaries as pooled ratios:
+        P(|ℓ| = 1 | opportunity)   = num_abs(1) / den_abs(1)
+        P(|ℓ| ≥ k | opportunity)   = [sum_{d≥k} num_abs(d)] / [sum_{d≥k} den_abs(d)]
+
+    Note: These are "opportunity-corrected" because denominators count only
+    transitions that were actually *possible* at each step (unrecalled items
+    within list bounds).
+
+    Parameters
+    ----------
+    lags, num, den : array-like
+        Outputs of `lag_crp_with_counts`.
+    large_lag_thresh : int
+        Threshold k for the large-absolute-lag bucket (|ℓ| >= k).
+
+    Returns
+    -------
+    p_abs1_cond : float
+        P(|ℓ| = 1 | opportunity)
+    p_abs_ge_k_cond : float
+        P(|ℓ| >= k | opportunity)
+    """
+    lags = np.asarray(lags, dtype=int)
+    num = np.asarray(num, dtype=float)
+    den = np.asarray(den, dtype=float)
+
+    valid = (lags != 0) & (den > 0)
+    if not np.any(valid):
+        return np.nan, np.nan
+
+    abs_lags = np.abs(lags)
+
+    # --- P(|ℓ| = 1 | opportunity) ---
+    m1 = valid & (abs_lags == 1)
+    den1 = den[m1].sum()
+    p_abs1 = (num[m1].sum() / den1) if den1 > 0 else np.nan
+
+    # --- P(|ℓ| >= k | opportunity) ---
+    k = int(large_lag_thresh)
+    mk = valid & (abs_lags >= k)
+    denk = den[mk].sum()
+    p_abs_ge_k = (num[mk].sum() / denk) if denk > 0 else np.nan
+
+    return float(p_abs1), float(p_abs_ge_k)
