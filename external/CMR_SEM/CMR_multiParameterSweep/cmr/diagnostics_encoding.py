@@ -1,23 +1,25 @@
 """
-CMR Multi-Parameter Sweep — Encoding-Stage Diagnostics
-=======================================================
-Summaries of learned association matrices (M_FC, M_CF) that reflect
-the structure written during the encoding phase.
+CMR Encoding-Stage Diagnostics (γ_fc & B_enc scale only)
+=========================================================
+Helper functions that inspect the association matrices M_FC and M_CF
+**after** the study list has been encoded but **before** retrieval begins.
 
-Because retrieval learning rates are zero in the default configuration,
-the weight matrices are deterministic within a parameter condition
-(identical across trials), so the stored ``net_w_fc`` / ``net_w_cf``
-from any single trial is representative.
+1. **Lag-strength profile** – For every possible serial-position lag
+   δ ∈ {−(N−1), …, +(N−1)}, compute the average absolute weight in the
+   matrix.  Lag 0 is the diagonal (item associated with its own context),
+   lag +1 is the forward neighbour, lag −1 is the backward neighbour, etc.
 
-Key quantities
---------------
-* **Lag-strength profile** — mean absolute weight at each
-  serial-position lag δ ∈ {−(N−1), …, N−1}.  The lag-0 entry is the
-  diagonal (self-association), lag +1 is the forward-neighbor, etc.
-* **Forward / backward lag asymmetry** —
-  mean(|W_sp[i, i+1]|) − mean(|W_sp[i, i−1]|) for the remapped matrix.
-* **Matrix norms** — Frobenius norm and mean absolute weight,
-  summarising overall association strength.
+2. **Forward / backward asymmetry** – difference between the mean
+   weight at lag +1 and the mean weight at lag −1.  A positive value
+   means the matrix encodes a stronger *forward* association than a
+   *backward* one.
+
+-----------
+* **item-index space** – rows/columns correspond to item feature indices
+  (order in which items appear in the feature vector, which is
+  randomised across trials).
+* **serial-position space** – rows/columns correspond to presentation
+  order (position 0 = first studied item, position N−1 = last).
 """
 
 import numpy as np
@@ -26,83 +28,124 @@ from .config import N, pres_indices
 from .utils import _get_sweep_entry
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Remap to serial-position space
-# ─────────────────────────────────────────────────────────────────────
+# =====================================================================
+# 1. Remap a weight matrix from item-index space → serial-position space
+# =====================================================================
 
 def remap_to_serial_position_space(W, pres_indices=pres_indices, N=N):
     """
-    Remap weight matrix from item-index space to serial-position space.
+    Re-index a weight matrix so that rows and columns correspond to
+    **serial position** (study order) instead of raw item indices.
 
-    ``W_sp[sp_i, sp_j]`` = ``W[item(sp_i), item(sp_j)]``
-    where ``item(sp)`` is the feature index of the item presented at
-    serial position ``sp``.
+    Parameters
+    ----------
+    W : (n_items, n_items) ndarray
+        Weight matrix in item-index space (e.g. the raw M_FC or M_CF
+        stored by the model after encoding).
+    pres_indices : (N,) array-like
+        ``pres_indices[sp]`` gives the 1-based feature index of the item
+        presented at serial position ``sp``.
+    N : int
+        Number of items on the study list.
+
+    Returns
+    -------
+    W_sp : (N, N) ndarray
+        The same weights, but now ``W_sp[sp_i, sp_j]`` holds the weight
+        that originally sat at ``W[item(sp_i), item(sp_j)]``.
+
+    Why we need this
+    ----------------
+    The model stores weights using item feature indices, which are
+    randomly assigned.  To compare across conditions we need a common
+    coordinate system — serial position — so that "lag +1" always means
+    "one study position forward."
     """
     W_sp = np.zeros((N, N))
     for sp_i in range(N):
         for sp_j in range(N):
-            W_sp[sp_i, sp_j] = W[int(pres_indices[sp_i] - 1),
-                                  int(pres_indices[sp_j] - 1)]
+            # pres_indices is 1-based, so subtract 1 for 0-based indexing
+            row = int(pres_indices[sp_i]) - 1
+            col = int(pres_indices[sp_j]) - 1
+            W_sp[sp_i, sp_j] = W[row, col]
     return W_sp
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Lag-strength profile
-# ─────────────────────────────────────────────────────────────────────
+# =====================================================================
+# 2. Lag-strength profile
+# =====================================================================
 
 def lag_strength_profile(W_sp, N=N, absolute=True):
     """
-    Mean weight at each serial-position lag δ.
+    Compute the mean weight at every serial-position lag δ.
 
-    For M_FC (feature→context): ``W_sp[sp_c, sp_f]`` — the lag is
-    ``δ = sp_f − sp_c`` (how far the feature's serial position is from
-    the context row's serial position).
+    "Lag" here means the column position minus the row position:
+        δ  =  sp_col − sp_row
+
+    So δ = +1 captures forward-neighbour associations and δ = −1
+    captures backward-neighbour associations.
 
     Parameters
     ----------
-    W_sp : (N, N) array in serial-position space.
-    absolute : bool
-        If True, take absolute values before averaging.
+    W_sp : (N, N) ndarray
+        Weight matrix in serial-position space (output of
+        ``remap_to_serial_position_space``).
+    absolute : bool, default True
+        If True, take the absolute value of each weight before
+        averaging.  This is the standard choice because we care about
+        association *strength* regardless of sign.
 
     Returns
     -------
-    lags   : array of ints −(N−1) … (N−1)
-    means  : corresponding mean weight per lag
+    lags : (2N−1,) int array
+        The lag values from −(N−1) to +(N−1).
+    means : (2N−1,) float array
+        The mean (absolute) weight at each lag.
     """
     lags_out = []
     means_out = []
-    for delta in range(-(N - 1), N):
+
+    for delta in range(-(N - 1), N):          # δ from −(N−1) to +(N−1)
         vals = []
-        for i in range(N):
-            j = i + delta
-            if 0 <= j < N:
-                vals.append(abs(W_sp[i, j]) if absolute else W_sp[i, j])
+        for row in range(N):
+            col = row + delta                  # the column at this lag
+            if 0 <= col < N:                   # stay inside the matrix
+                w = abs(W_sp[row, col]) if absolute else W_sp[row, col]
+                vals.append(w)
         lags_out.append(delta)
         means_out.append(np.mean(vals) if vals else 0.0)
+
     return np.array(lags_out), np.array(means_out)
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Forward / backward lag asymmetry of W_FC
-# ─────────────────────────────────────────────────────────────────────
+# =====================================================================
+# 3. Forward / backward asymmetry
+# =====================================================================
 
-def compute_w_fc_forward_backward_lag_asymmetry(W_sp, N=N, absolute=True):
+def compute_forward_backward_asymmetry(W_sp, N=N, absolute=True):
     """
-    Forward-minus-backward neighbor-lag mean of a weight matrix
-    in serial-position space.
+    Compare the mean weight at lag +1 (forward neighbour) with the
+    mean weight at lag −1 (backward neighbour).
+
+    Parameters
+    ----------
+    W_sp : (N, N) ndarray   – serial-position-space weight matrix.
+    absolute : bool          – take absolute values before averaging.
 
     Returns
     -------
-    fwd_mean  : float — mean of lag δ = +1
-    bwd_mean  : float — mean of lag δ = −1
-    asymmetry : float — fwd_mean − bwd_mean
+    fwd_mean  : float – mean weight at lag δ = +1
+    bwd_mean  : float – mean weight at lag δ = −1
+    asymmetry : float – fwd_mean − bwd_mean  (positive ⇒ forward bias)
     """
     def _lag_mean(delta):
+        """Average (absolute) weight for a single lag value."""
         vals = []
-        for i in range(N):
-            j = i + delta
-            if 0 <= j < N:
-                vals.append(abs(W_sp[i, j]) if absolute else W_sp[i, j])
+        for row in range(N):
+            col = row + delta
+            if 0 <= col < N:
+                w = abs(W_sp[row, col]) if absolute else W_sp[row, col]
+                vals.append(w)
         return np.mean(vals) if vals else 0.0
 
     fwd = _lag_mean(+1)
@@ -110,107 +153,74 @@ def compute_w_fc_forward_backward_lag_asymmetry(W_sp, N=N, absolute=True):
     return fwd, bwd, fwd - bwd
 
 
-# ─────────────────────────────────────────────────────────────────────
-# Matrix norms
-# ─────────────────────────────────────────────────────────────────────
+# =====================================================================
+# 4. Sweep-level convenience functions
+#    (loop over every value in a parameter grid and collect diagnostics)
+# =====================================================================
 
-def matrix_norms(W):
+def sweep_lag_strength_profile(sweep_results, param_grid,
+                               matrix_key="net_w_fc", absolute=True):
     """
-    Returns
-    -------
-    frob     : float — Frobenius norm ‖W‖_F
-    mean_abs : float — mean |W_ij|
-    """
-    return float(np.linalg.norm(W, 'fro')), float(np.mean(np.abs(W)))
-
-
-# ─────────────────────────────────────────────────────────────────────
-# Sweep-level convenience extractors
-# ─────────────────────────────────────────────────────────────────────
-
-def sweep_matrix_norms(sweep_results, param_grid, matrix_key="net_w_fc"):
-    """
-    Frobenius norm and mean-abs weight across a sweep.
+    Compute the lag-strength profile for every parameter-grid value.
 
     Parameters
     ----------
-    matrix_key : ``"net_w_fc"`` or ``"net_w_cf"``
+    sweep_results : list of dicts
+        Output of ``sweep_one_param``.  Each dict must contain a key
+        ``matrix_key`` holding the (n_items, n_items) weight matrix.
+    param_grid : array-like of float
+        The swept parameter values (e.g. ``gamma_fc_grid``).
+    matrix_key : str
+        ``"net_w_fc"`` for M_FC or ``"net_w_cf"`` for M_CF.
+    absolute : bool
+        Passed through to ``lag_strength_profile``.
 
     Returns
     -------
-    frob_arr, mean_abs_arr : arrays aligned with param_grid
-    """
-    param_grid = np.asarray(param_grid, dtype=float)
-    frob_arr = np.full(len(param_grid), np.nan)
-    mabs_arr = np.full(len(param_grid), np.nan)
-    for i, v in enumerate(param_grid):
-        entry = _get_sweep_entry(sweep_results, v)
-        W = entry.get(matrix_key)
-        if W is not None:
-            frob_arr[i], mabs_arr[i] = matrix_norms(W)
-    return frob_arr, mabs_arr
-
-
-def sweep_w_fc_lag_strength_profile(sweep_results, param_grid,
-                                    matrix_key="net_w_fc", absolute=True):
-    """
-    Lag-strength profiles for every grid value.
-
-    Returns
-    -------
-    lags     : (2N−1,) int array
+    lags : (2N−1,) int array
+        Shared lag axis.
     profiles : (len(param_grid), 2N−1) float array
+        One row per grid value; each row is the lag-strength profile.
     """
     param_grid = np.asarray(param_grid, dtype=float)
     lags = None
     profiles = []
+
     for v in param_grid:
         entry = _get_sweep_entry(sweep_results, v)
-        W = entry.get(matrix_key)
-        W_sp = remap_to_serial_position_space(W)
+        W = entry[matrix_key]                       # raw weight matrix
+        W_sp = remap_to_serial_position_space(W)    # → serial-position space
         l, m = lag_strength_profile(W_sp, absolute=absolute)
         if lags is None:
             lags = l
         profiles.append(m)
+
     return lags, np.vstack(profiles)
 
 
-def sweep_w_fc_forward_backward_lag_asymmetry(
-        sweep_results, param_grid, matrix_key="net_w_fc", absolute=True):
+def sweep_forward_backward_asymmetry(sweep_results, param_grid,
+                                     matrix_key="net_w_fc", absolute=True):
     """
-    Forward & backward neighbor-lag means and asymmetry across a sweep.
+    Forward/backward asymmetry for every parameter-grid value.
 
     Returns
     -------
-    fwd_arr, bwd_arr, asym_arr : arrays aligned with param_grid
+    fwd_arr  : (len(param_grid),) float array – mean weight at lag +1
+    bwd_arr  : (len(param_grid),) float array – mean weight at lag −1
+    asym_arr : (len(param_grid),) float array – fwd − bwd
     """
     param_grid = np.asarray(param_grid, dtype=float)
-    fwd_arr = np.full(len(param_grid), np.nan)
-    bwd_arr = np.full(len(param_grid), np.nan)
-    asym_arr = np.full(len(param_grid), np.nan)
+    n = len(param_grid)
+    fwd_arr = np.full(n, np.nan)
+    bwd_arr = np.full(n, np.nan)
+    asym_arr = np.full(n, np.nan)
+
     for i, v in enumerate(param_grid):
         entry = _get_sweep_entry(sweep_results, v)
-        W = entry.get(matrix_key)
+        W = entry[matrix_key]
         W_sp = remap_to_serial_position_space(W)
-        f, b, a = compute_w_fc_forward_backward_lag_asymmetry(
-            W_sp, absolute=absolute)
-        fwd_arr[i], bwd_arr[i], asym_arr[i] = f, b, a
+        fwd_arr[i], bwd_arr[i], asym_arr[i] = (
+            compute_forward_backward_asymmetry(W_sp, absolute=absolute)
+        )
+
     return fwd_arr, bwd_arr, asym_arr
-
-
-def sweep_recall_counts(sweep_results, param_grid):
-    """
-    Mean number of items recalled per trial (from recall_sims).
-
-    Returns
-    -------
-    mean_counts : array aligned with param_grid
-    """
-    param_grid = np.asarray(param_grid, dtype=float)
-    out = np.full(len(param_grid), np.nan)
-    for i, v in enumerate(param_grid):
-        entry = _get_sweep_entry(sweep_results, v)
-        rs = entry.get("recall_sims")
-        if rs is not None:
-            out[i] = float(np.mean(np.sum(rs > 0, axis=0)))
-    return out

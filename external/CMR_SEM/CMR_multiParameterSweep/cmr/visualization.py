@@ -8,8 +8,8 @@ All plotting routines, organized by category:
    conditional directional lag rates, unconditional lag summaries.
 3. **Recall-stage diagnostic plots** — context-update traces, evidence
    profiles, item-evidence asymmetry, FC-alignment asymmetry.
-4. **Encoding-stage diagnostic plots** — lag-strength profiles, matrix
-   norms, forward/backward lag asymmetry.
+4. **Encoding-stage diagnostic plots** — lag-strength profiles,
+   forward/backward lag asymmetry.
 """
 
 import numpy as np
@@ -34,9 +34,8 @@ from .diagnostics_recall import (
     fc_alignment_asymmetry_means,
 )
 from .diagnostics_encoding import (
-    sweep_matrix_norms,
-    sweep_w_fc_lag_strength_profile,
-    sweep_w_fc_forward_backward_lag_asymmetry,
+    sweep_lag_strength_profile,
+    sweep_forward_backward_asymmetry,
 )
 
 
@@ -441,7 +440,7 @@ def plot_w_fc_lag_strength_profile_sweep(
     """Lag-strength profile (mean |weight| at each SP lag) across sweep."""
     param_grid = np.asarray(param_grid, dtype=float)
     colors, norm, cmap = make_sweep_colors(param_grid, cmap_name)
-    lags, profiles = sweep_w_fc_lag_strength_profile(
+    lags, profiles = sweep_lag_strength_profile(
         sweep_results, param_grid, matrix_key=matrix_key)
     matrix_label = r"$M_{FC}$" if "fc" in matrix_key else r"$M_{CF}$"
 
@@ -456,28 +455,6 @@ def plot_w_fc_lag_strength_profile_sweep(
     fig.tight_layout(); plt.show()
 
 
-def plot_matrix_norms_sweep(sweep_results, param_grid, param_name,
-                             matrix_key="net_w_fc", cmap_name="viridis"):
-    """Frobenius norm and mean |weight| across sweep."""
-    param_grid = np.asarray(param_grid, dtype=float)
-    colors, norm, cmap = make_sweep_colors(param_grid, cmap_name)
-    frob, mabs = sweep_matrix_norms(sweep_results, param_grid, matrix_key)
-    matrix_label = r"$M_{FC}$" if "fc" in matrix_key else r"$M_{CF}$"
-
-    fig, axs = plt.subplots(1, 2, figsize=(11, 4), sharex=True)
-    line_with_colored_points(axs[0], param_grid, frob, colors)
-    axs[0].set_title(rf"$\|{matrix_label}\|_F$ vs {param_name}")
-    axs[0].set_ylabel("Frobenius norm"); axs[0].grid(alpha=0.3)
-
-    line_with_colored_points(axs[1], param_grid, mabs, colors)
-    axs[1].set_title(rf"mean $|w_{{ij}}|$ of {matrix_label} vs {param_name}")
-    axs[1].set_ylabel("mean |weight|"); axs[1].grid(alpha=0.3)
-
-    for a in axs: a.set_xlabel(param_name)
-    fig.tight_layout()
-    _add_colorbar(fig, axs, norm, cmap, param_name)
-    plt.show()
-
 
 def plot_w_fc_forward_backward_lag_asymmetry_sweep(
         sweep_results, param_grid, param_name,
@@ -485,7 +462,7 @@ def plot_w_fc_forward_backward_lag_asymmetry_sweep(
     """Forward vs backward lag mean + asymmetry of W_FC across sweep."""
     param_grid = np.asarray(param_grid, dtype=float)
     colors, norm, cmap = make_sweep_colors(param_grid, cmap_name)
-    fwd, bwd, asym = sweep_w_fc_forward_backward_lag_asymmetry(
+    fwd, bwd, asym = sweep_forward_backward_asymmetry(
         sweep_results, param_grid, matrix_key=matrix_key)
     matrix_label = r"$M_{FC}$" if "fc" in matrix_key else r"$M_{CF}$"
 
