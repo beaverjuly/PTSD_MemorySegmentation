@@ -119,3 +119,36 @@ def sweep_one_param(param_name, param_grid, base_params, n_sims=500,
             print(f"  {param_name}={val:.4g}  done")
 
     return sweep_results
+
+# =====================================================================
+# Recall-count convenience extractor
+# =====================================================================
+
+def sweep_recall_counts(sweep_results, param_grid) -> np.ndarray:
+    """
+    Mean number of items recalled per trial across a parameter sweep.
+
+    Parameters
+    ----------
+    sweep_results : list[dict] | dict
+        Output of ``sweep_one_param``. Each entry must contain a
+        ``"recall_sims"`` array (items × trials, with 0 = no recall).
+    param_grid : array-like of float
+        The swept parameter values.
+
+    Returns
+    -------
+    mean_counts : (len(param_grid),) float array
+        Average number of non-zero recall events per trial,
+        aligned with ``param_grid``.
+    """
+    param_grid = np.asarray(param_grid, dtype=float)
+    out = np.full(len(param_grid), np.nan, dtype=float)
+
+    for i, v in enumerate(param_grid):
+        entry = _get_sweep_entry(sweep_results, v)
+        rs = entry.get("recall_sims", None)
+        if rs is not None:
+            out[i] = float(np.mean(np.sum(rs > 0, axis=0)))
+
+    return out
