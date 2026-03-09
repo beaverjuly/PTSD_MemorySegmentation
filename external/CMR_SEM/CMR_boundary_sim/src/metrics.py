@@ -183,7 +183,7 @@ def position_conditional_crp(
 
 
 # =====================================================================
-# Boundary transition — the single workhorse
+# Boundary transition (wrapper)
 # =====================================================================
 
 def boundary_transition(
