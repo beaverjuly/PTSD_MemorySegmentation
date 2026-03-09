@@ -37,7 +37,7 @@ pres_indices = _rng_pres.permutation(N) + 1  # 1-based
 # =====================================================================
 
 B_NON_BOUNDARY_BASE  = 0.6      # baseline drift for non-boundary items
-B_BOUNDARY_DELTA_BASE = 0.2     # healthy boundary boost Δ
+B_BOUNDARY_DELTA_BASE = 0.4     # healthy boundary boost Δ
 B_BOUNDARY_BASE = B_NON_BOUNDARY_BASE + B_BOUNDARY_DELTA_BASE  
 
 
@@ -46,10 +46,10 @@ B_BOUNDARY_BASE = B_NON_BOUNDARY_BASE + B_BOUNDARY_DELTA_BASE
 # =====================================================================
 
 # H1 — Boundary impairment: vary Δ, fix non-boundary at 0.6
-BOUNDARY_DELTAS = [0.2, 0.1, 0.0]
+BOUNDARY_DELTAS = [0.4, 0.2, 0.0]
 
 # H2 — Global tonic lowering: (non-boundary, boundary) pairs
-GLOBAL_LEVELS = [(0.6, 0.8), (0.5, 0.7), (0.4, 0.6)]
+GLOBAL_LEVELS = [(0.6, 1), (0.5, 0.9), (0.4, 0.8)]
 
 
 # =====================================================================
