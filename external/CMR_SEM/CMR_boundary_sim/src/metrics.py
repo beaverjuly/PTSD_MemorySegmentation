@@ -523,3 +523,130 @@ def summarize_condition_metrics(
         "train_bounds": bounds,
         "mean_train_recall": mtr,
     }
+
+## ------------- Segment-specific metrics -------------
+
+def extract_segment_recall_sims(recall_sims, start, end):
+    """
+    Restrict each recall sequence to items from [start, end] (inclusive),
+    preserve recall order, and remap serial positions to 1..segment_length.
+
+    Parameters
+    ----------
+    recall_sims : np.ndarray
+        Array of shape (max_recalls, n_sims) containing recalled serial positions,
+        with 0 used as padding for unrecalled slots.
+    start : int
+        Inclusive start serial position of the segment in original list coordinates.
+    end : int
+        Inclusive end serial position of the segment in original list coordinates.
+
+    Returns
+    -------
+    np.ndarray
+        Array of shape (segment_length, n_sims) containing only recalls from the
+        requested segment, remapped to local positions 1..segment_length, with 0
+        padding below the realized recalls for each simulation.
+    """
+    seg_len = end - start + 1
+    n_sims = recall_sims.shape[1]
+    out = np.zeros((seg_len, n_sims), dtype=int)
+
+    for s in range(n_sims):
+        seq = recall_sims[:, s]
+        seq = seq[seq > 0].astype(int)          # drop padding
+        seq = seq[(seq >= start) & (seq <= end)]  # keep only this segment
+        seq = seq - start + 1                   # remap to local 1..seg_len
+        out[:len(seq), s] = seq
+
+    return out
+
+
+def summarize_segment_metrics(results, start, end, N, boundary_pos=None, half_window=4):
+    """
+    Build segment-conditional summaries for each condition.
+
+    Within-segment metrics:
+        Restrict recall sequences to items from the chosen segment only, remap them
+        to local positions 1..segment_length, and recompute SPC, PFR, lag-CRP,
+        and proportion recalled.
+
+    Boundary-local metrics:
+        If boundary_pos is provided, compute boundary-local transition and local-SPC
+        summaries on the ORIGINAL full recall sequences, but only for that one
+        boundary position.
+
+    Parameters
+    ----------
+    results : dict
+        Mapping from condition label -> result dict, where each result dict must
+        contain 'recall_sims'.
+    start : int
+        Inclusive start serial position of the focal segment in original coordinates.
+    end : int
+        Inclusive end serial position of the focal segment in original coordinates.
+    N : int
+        Full list length in original coordinates.
+    boundary_pos : int or None, optional
+        Original-coordinate boundary position to use for boundary-local summaries.
+        If None, no boundary-local metrics are added.
+    half_window : int, optional
+        Window size for boundary_local_spc.
+
+    Returns
+    -------
+    dict
+        Nested mapping:
+            condition_label -> summary dict
+    """
+    seg_summaries = {}
+    seg_len = end - start + 1
+
+    for label, res in results.items():
+        recall_sims_full = res['recall_sims']
+        recall_sims_seg = extract_segment_recall_sims(recall_sims_full, start, end)
+
+        lag_vals, crp = compute_lag_crp(recall_sims_seg, seg_len)
+
+        out = {
+            'segment_recall_sims': recall_sims_seg,
+            'segment_spc': compute_spc(recall_sims_seg, seg_len),
+            'segment_pfr': compute_pfr(recall_sims_seg, seg_len),
+            'segment_lag_crp': (lag_vals, crp),
+            'segment_accuracy': recall_accuracy(recall_sims_seg, seg_len),
+        }
+
+        if boundary_pos is not None:
+            rel, mspc, se = boundary_local_spc(
+                recall_sims_full,
+                N,
+                boundary_positions=[boundary_pos],
+                half_window=half_window,
+            )
+
+            out['boundary_pre_to_boundary'] = boundary_transition(
+                recall_sims_full,
+                N,
+                -1,
+                0,
+                boundary_positions=[boundary_pos],
+            )
+            out['boundary_backward'] = boundary_transition(
+                recall_sims_full,
+                N,
+                0,
+                -1,
+                boundary_positions=[boundary_pos],
+            )
+            out['boundary_forward'] = boundary_transition(
+                recall_sims_full,
+                N,
+                0,
+                1,
+                boundary_positions=[boundary_pos],
+            )
+            out['boundary_local_spc'] = (rel, mspc, se)
+
+        seg_summaries[label] = out
+
+    return seg_summaries
