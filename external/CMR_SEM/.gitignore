@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+
+# Jupyter
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# macOS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Env / local config
+.env
+.venv/
+venv/
+env/
+
+# Data / logs / outputs
+*.log
+
+# Do not commit this folder yet
+RL_boundary_sim/
