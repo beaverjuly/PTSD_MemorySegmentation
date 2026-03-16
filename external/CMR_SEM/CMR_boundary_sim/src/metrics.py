@@ -5,6 +5,30 @@ Whole-list metrics
 ------------------
 compute_spc, compute_pfr, compute_lag_crp, recall_accuracy
 
+Train-level metrics (Polyn 2009-style)
+---------------------------------------
+compute_train_recall  — proportion of items recalled from each train
+mean_train_recall     — unweighted mean across trains (convenience scalar)
+
+    Trains are segments of the list defined by boundary positions.
+    For the default 32-item design with boundaries at [9, 17, 25]:
+        Train 1 = positions 1–8
+        Train 2 = positions 9–16
+        Train 3 = positions 17–24
+        Train 4 = positions 25–32
+
+    Interpretive caveats
+    ~~~~~~~~~~~~~~~~~~~~
+    - Train 1 may partly reflect primacy-related dynamics rather than
+      pure boundary structure.  Differences among Trains 2–4 are more
+      directly informative about the manipulated boundary/baseline
+      drift schedule.
+    - mean_train_recall equals whole-list recall_accuracy only when
+      all trains have the same length.  This holds for the default
+      32-item design but is NOT guaranteed in general.
+    - Zero-padding in recall_sims is explicitly excluded so that
+      unused recall slots are never counted as recalled items.
+
 Boundary-local metrics
 ----------------------
 boundary_transition   — the single workhorse for any transition
@@ -111,6 +135,129 @@ def recall_accuracy(recall_sims, N, unique=True):
             seq = np.unique(seq)
         acc.append(len(seq) / float(N))
     return float(np.mean(acc)) if acc else np.nan
+
+
+# =====================================================================
+# Train-level recall (Polyn 2009-style)
+# =====================================================================
+
+def _train_bounds_from_boundaries(N, boundary_positions):
+    """
+    Derive 1-based inclusive (start, end) tuples for each train.
+
+    Trains are the segments between successive boundary positions.
+    For N=32 and boundary_positions=[9, 17, 25] the result is:
+        [(1, 8), (9, 16), (17, 24), (25, 32)]
+
+    Parameters
+    ----------
+    N : int
+        List length.
+    boundary_positions : list[int]
+        1-based serial positions where boundaries occur.
+
+    Returns
+    -------
+    bounds : list of (int, int)
+        Each tuple is (start, end) inclusive, in 1-based indexing.
+    """
+    bounds = []
+    starts = [1] + sorted(boundary_positions)
+
+    for i in range(len(starts)):
+        start = starts[i]
+        end = starts[i + 1] - 1 if i + 1 < len(starts) else N
+        if start <= end:
+            bounds.append((start, end))
+
+    return bounds
+
+
+def compute_train_recall(recall_sims, N, boundary_positions, unique=True):
+    """
+    Proportion of items recalled from each train, per simulation.
+
+    For each simulation s and train t:
+
+        TrainRecall[s, t] = #(unique recalled items in train t)
+                            / #(items in train t)
+
+    Parameters
+    ----------
+    recall_sims : (N, n_sims) int array
+        Recalled serial positions (1-based, 0-padded).
+    N : int
+        List length.
+    boundary_positions : list[int]
+        1-based serial positions of boundary items.
+    unique : bool
+        If True (default), count each recalled item at most once.
+
+    Returns
+    -------
+    train_ids : (n_trains,) int array
+        Train numbers (1-based).
+    bounds : list of (int, int)
+        Inclusive (start, end) for each train.
+    mean_tr : (n_trains,) float array
+        Mean train recall across simulations.
+    se_tr : (n_trains,) float array
+        Standard error of train recall across simulations.
+    per_sim_train_recall : (n_sims, n_trains) float array
+        Full per-simulation × per-train recall matrix.
+    """
+    bounds = _train_bounds_from_boundaries(N, boundary_positions)
+    n_sims = recall_sims.shape[1]
+    n_trains = len(bounds)
+
+    per_sim_train_recall = np.zeros((n_sims, n_trains))
+
+    for s in range(n_sims):
+        recalls = recall_sims[:, s]
+        # Remove zero-padding, then optionally unique
+        recalls = recalls[recalls > 0]
+        if unique:
+            recalls = np.unique(recalls)
+
+        for t, (start, end) in enumerate(bounds):
+            train_length = end - start + 1
+            hits = np.sum((recalls >= start) & (recalls <= end))
+            per_sim_train_recall[s, t] = hits / train_length
+
+    train_ids = np.arange(1, n_trains + 1)
+    mean_tr = np.mean(per_sim_train_recall, axis=0)
+    se_tr = np.std(per_sim_train_recall, axis=0, ddof=1) / np.sqrt(n_sims)
+
+    return train_ids, bounds, mean_tr, se_tr, per_sim_train_recall
+
+
+def mean_train_recall(recall_sims, N, boundary_positions, unique=True):
+    """
+    Unweighted mean of train-level recall proportions.
+
+    This is a convenience scalar: the average of per-train recall
+    proportions, first averaged across simulations, then across trains.
+
+    Note: this equals whole-list recall_accuracy ONLY when all trains
+    have the same length.  For the default 32-item design that is true,
+    but it is not guaranteed in general.
+
+    Parameters
+    ----------
+    recall_sims : (N, n_sims) int array
+    N : int
+    boundary_positions : list[int]
+    unique : bool
+
+    Returns
+    -------
+    float
+        Scalar mean across trains.
+    """
+    _, _, mean_tr, _, _ = compute_train_recall(
+        recall_sims, N, boundary_positions, unique=unique
+    )
+    return float(np.mean(mean_tr))
 
 
 # =====================================================================
@@ -336,19 +483,27 @@ def summarize_condition_metrics(
     half_window: int = 4,
 ) -> dict:
     """
-    Compute all primary and secondary metrics for one condition.
+    Compute all primary, secondary, and train-level metrics for one
+    condition.
 
     Returns
     -------
     dict with keys:
         recall_accuracy, whole_spc, whole_pfr, whole_lag_crp,
         pre_to_boundary, boundary_backward, boundary_forward,
-        boundary_local_spc
+        boundary_local_spc,
+        train_recall, train_bounds, mean_train_recall
     """
     lag_vals, crp = compute_lag_crp(recall_sims, N)
     rel, mean_spc_local, se_spc_local = boundary_local_spc(
         recall_sims, N, boundary_positions, half_window
     )
+
+    # Train-level recall
+    train_ids, bounds, mean_tr, se_tr, _ = compute_train_recall(
+        recall_sims, N, boundary_positions
+    )
+    mtr = float(np.mean(mean_tr))
 
     return {
         "recall_accuracy": recall_accuracy(recall_sims, N),
@@ -363,4 +518,8 @@ def summarize_condition_metrics(
         "boundary_forward":   boundary_transition(
             recall_sims, N, 0, 1, boundary_positions),
         "boundary_local_spc": (rel, mean_spc_local, se_spc_local),
+        # train-level recall (Polyn 2009-style)
+        "train_recall": (train_ids, mean_tr, se_tr),
+        "train_bounds": bounds,
+        "mean_train_recall": mtr,
     }
