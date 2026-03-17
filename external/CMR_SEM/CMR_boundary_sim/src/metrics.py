@@ -11,21 +11,20 @@ compute_train_recall  — proportion of items recalled from each train
 mean_train_recall     — unweighted mean across trains (convenience scalar)
 
     Trains are segments of the list defined by boundary positions.
-    For the default 32-item design with boundaries at [9, 17, 25]:
-        Train 1 = positions 1–8
-        Train 2 = positions 9–16
-        Train 3 = positions 17–24
-        Train 4 = positions 25–32
+    For the default 18-item design with boundaries at [7, 13]:
+        Train 1 = positions 1–6
+        Train 2 = positions 7–12
+        Train 3 = positions 13–18
 
     Interpretive caveats
     ~~~~~~~~~~~~~~~~~~~~
     - Train 1 may partly reflect primacy-related dynamics rather than
-      pure boundary structure.  Differences among Trains 2–4 are more
+      pure boundary structure.  Differences among Trains 2–3 are more
       directly informative about the manipulated boundary/baseline
       drift schedule.
     - mean_train_recall equals whole-list recall_accuracy only when
       all trains have the same length.  This holds for the default
-      32-item design but is NOT guaranteed in general.
+      18-item design but is NOT guaranteed in general.
     - Zero-padding in recall_sims is explicitly excluded so that
       unused recall slots are never counted as recalled items.
 
@@ -146,8 +145,8 @@ def _train_bounds_from_boundaries(N, boundary_positions):
     Derive 1-based inclusive (start, end) tuples for each train.
 
     Trains are the segments between successive boundary positions.
-    For N=32 and boundary_positions=[9, 17, 25] the result is:
-        [(1, 8), (9, 16), (17, 24), (25, 32)]
+    For N=18 and boundary_positions=[7, 13] the result is:
+        [(1, 6), (7, 12), (13, 18)]
 
     Parameters
     ----------
@@ -239,7 +238,7 @@ def mean_train_recall(recall_sims, N, boundary_positions, unique=True):
     proportions, first averaged across simulations, then across trains.
 
     Note: this equals whole-list recall_accuracy ONLY when all trains
-    have the same length.  For the default 32-item design that is true,
+    have the same length.  For the default 18-item design that is true,
     but it is not guaranteed in general.
 
     Parameters

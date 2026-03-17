@@ -11,6 +11,9 @@ positions so multi-boundary designs are first-class citizens.
     build_global_schedule     — H2: globally shifted baseline + fixed boundary value
     build_baseline_schedule   — convenience wrapper using config defaults
     describe_schedule         — human-readable summary of a drift array
+
+All schedule builders enforce B[0] = 1.0 (the first item always
+receives a maximal drift rate, regardless of hypothesis or baseline).
 """
 
 from __future__ import annotations
@@ -28,6 +31,12 @@ from .config import (
 # Drift schedule builders
 # =====================================================================
 
+def _apply_first_item_drift(B: np.ndarray) -> np.ndarray:
+    """Set the first position to drift = 1.0, then clip to [0, 1]."""
+    B[0] = 1.0
+    return np.clip(B, 0.0, 1.0)
+
+
 def build_boundary_schedule(
     B_non: float,
     delta: float,
@@ -38,6 +47,7 @@ def build_boundary_schedule(
 
         B[i] = B_non              for all non-boundary positions
         B[j] = B_non + delta      for every j in boundary_positions
+        B[0] = 1.0               (first item always maximal)
 
     Parameters
     ----------
@@ -55,7 +65,7 @@ def build_boundary_schedule(
     B = np.full(N, B_non, dtype=float)
     for j in boundary_positions:
         B[j - 1] = B_non + delta
-    return np.clip(B, 0.0, 1.0)
+    return _apply_first_item_drift(B)
 
 
 def build_global_schedule(
@@ -68,6 +78,7 @@ def build_global_schedule(
 
         B[i] = B_non          for non-boundary positions
         B[j] = B_boundary     for every j in boundary_positions
+        B[0] = 1.0           (first item always maximal)
 
     Parameters
     ----------
@@ -85,7 +96,7 @@ def build_global_schedule(
     B = np.full(N, B_non, dtype=float)
     for j in boundary_positions:
         B[j - 1] = B_boundary
-    return np.clip(B, 0.0, 1.0)
+    return _apply_first_item_drift(B)
 
 
 def build_baseline_schedule(
@@ -104,7 +115,8 @@ def describe_schedule(B_encD: np.ndarray, boundary_positions: list[int] | np.nda
     bdy_vals = [B_encD[j - 1] for j in boundary_positions]
     parts = [
         f"N = {len(B_encD)}, boundaries at {sorted(boundary_positions)}",
-        f"non-boundary drift: {np.mean(non_vals):.3f} (range {min(non_vals):.3f}\u2013{max(non_vals):.3f})",
+        f"non-boundary drift: mean {np.mean(non_vals):.3f} (range {min(non_vals):.3f}\u2013{max(non_vals):.3f})",
+        f"  (position 1 forced to 1.0)",
         f"boundary drift:     {np.mean(bdy_vals):.3f} (range {min(bdy_vals):.3f}\u2013{max(bdy_vals):.3f})",
     ]
     return "\n".join(parts)

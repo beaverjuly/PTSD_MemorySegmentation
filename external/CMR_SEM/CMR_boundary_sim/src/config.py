@@ -3,8 +3,8 @@ CMR Boundary-Signal Simulation — Configuration
 
 Supports single- and multi-boundary list structures.
 
-Default configuration: N = 32, boundaries at positions 9, 17, 25
-(four 8-item segments).
+Default configuration: N = 18, boundaries at positions 7 and 13
+(three 6-item segments).
 
 Two hypothesis families:
   H1 — Boundary/update-signal impairment  (vary Δ only)
@@ -20,11 +20,11 @@ import numpy as np
 # List structure
 # =====================================================================
 
-N = 32
+N = 18
 
 # Boundary configurations
-BOUNDARY_POSITIONS_SINGLE = [13]           # legacy single-boundary
-BOUNDARY_POSITIONS_MULTI  = [9, 17, 25]    # four 8-item segments
+BOUNDARY_POSITIONS_SINGLE = [7]            # single-boundary variant
+BOUNDARY_POSITIONS_MULTI  = [7, 13]        # three 6-item segments
 BOUNDARY_POSITIONS        = BOUNDARY_POSITIONS_MULTI   # active config
 
 # Fixed item-to-slot mapping (seed-locked for reproducibility)
