@@ -20,11 +20,11 @@ import numpy as np
 # List structure
 # =====================================================================
 
-N = 18
+N = 16
 
 # Boundary configurations
-BOUNDARY_POSITIONS_SINGLE = [7]            # single-boundary variant
-BOUNDARY_POSITIONS_MULTI  = [7, 13]        # three 6-item segments
+BOUNDARY_POSITIONS_SINGLE = [5]            # single-boundary variant
+BOUNDARY_POSITIONS_MULTI  = [5, 9, 13]        # three 4-item segments
 BOUNDARY_POSITIONS        = BOUNDARY_POSITIONS_MULTI   # active config
 
 # Fixed item-to-slot mapping (seed-locked for reproducibility)
