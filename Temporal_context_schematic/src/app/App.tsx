@@ -3,7 +3,7 @@ import React from "react";
 export default function App() {
   // Colors — high contrast on white
   const bg = "#ffffff";
-  const context = "#4a5abc";    // deeper blue-purple
+  const context = "#3e4b9f";    // deeper blue-purple
   const contextDim = "#4a5abc50";
   const orange = "#d4652a";     // rich warm orange
   const green = "#2a7a4e";      // deeper green
@@ -42,12 +42,25 @@ export default function App() {
           <marker id="arrowContext" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <path d="M0,0 L10,3.5 L0,7" fill="none" stroke={context} strokeWidth="1.5" />
           </marker>
+          <marker id="arrowContextFilled" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <path d="M0,0 L10,3.5 L0,7 Z" fill={context} stroke="none" />
+          </marker>
           <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <path d="M0,0 L10,3.5 L0,7" fill="none" stroke={green} strokeWidth="1.5" />
           </marker>
           <marker id="arrowDim" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
             <path d="M0,0 L10,3.5 L0,7" fill="none" stroke={dimText} strokeWidth="1.5" />
           </marker>
+          {/* Gradient for current context band */}
+          <linearGradient id="ctxBandGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={context} stopOpacity="0" />
+            <stop offset="15%" stopColor={context} stopOpacity="0.15" />
+            <stop offset="40%" stopColor={context} stopOpacity="0.7" />
+            <stop offset="50%" stopColor={context} stopOpacity="0.85" />
+            <stop offset="60%" stopColor={context} stopOpacity="0.7" />
+            <stop offset="85%" stopColor={context} stopOpacity="0.15" />
+            <stop offset="100%" stopColor={context} stopOpacity="0" />
+          </linearGradient>
         </defs>
 
         {/* ============ TOP ROW ============ */}
@@ -93,12 +106,27 @@ export default function App() {
               <text x={beltX + beltW / 2} y={beltY + beltH + 24} textAnchor="middle" fill={context} fontSize="13" letterSpacing="2" fontWeight="500">
                 TEMPORAL CONTEXT
               </text>
-              {/* Direction arrow on belt */}
-              <line x1={beltX + 25} y1={beltY + beltH / 2} x2={beltX + 85} y2={beltY + beltH / 2} stroke={contextDim} strokeWidth="2" markerEnd="url(#arrowContext)" />
+              {/* Direction arrow on belt — removed from start, now placed after band */}
 
-              {/* Current context marker - glowing */}
-              <circle cx={ctxX} cy={beltY + beltH / 2} r="10" fill={context} filter="url(#glow)" opacity="0.9" />
-              <circle cx={ctxX} cy={beltY + beltH / 2} r="5" fill="#fff" opacity="0.9" />
+              {/* Current context band — gradient: edges light, center dark */}
+              {(() => {
+                const bandW = 280;
+                const bandX = ctxX - bandW / 2;
+                return (
+                  <>
+                    <rect
+                      x={bandX}
+                      y={beltY - 4}
+                      width={bandW}
+                      height={beltH + 8}
+                      rx="6"
+                      fill="url(#ctxBandGrad)"
+                    />
+                    {/* Direction arrow overlaid on the band */}
+                    <line x1={ctxX - 35} y1={beltY + beltH / 2} x2={ctxX + 35} y2={beltY + beltH / 2} stroke={context} strokeWidth="2" markerEnd="url(#arrowContextFilled)" />
+                  </>
+                );
+              })()}
               {/* Label for current context */}
               <text x={ctxX} y={beltY + beltH + 46} textAnchor="middle" fill={context} fontSize="12" fontWeight="500">
                 current context
