@@ -385,7 +385,7 @@ export default function App() {
           const iW = 90;
           const iH = 40;
           const startX = px + 55;
-          const positions = [0, 85, 165, 360];
+          const positions = [0, 65, 125, 271];
           const hBeltX = px + 25;
           const hBeltW = pw - 50;
 
@@ -436,9 +436,9 @@ export default function App() {
 
               {/* Spacing brackets */}
               {[
-                { x1: startX, x2: startX + 85, big: false },
-                { x1: startX + 85, x2: startX + 165, big: false },
-                { x1: startX + 165, x2: startX + 360, big: true },
+                { x1: startX, x2: startX + 65, big: false },
+                { x1: startX + 65, x2: startX + 125, big: false },
+                { x1: startX + 125, x2: startX + 271, big: true },
               ].map((seg, i) => {
                 const bracketY = bY + bH + 20;
                 const col = seg.big ? orange : dimText;
@@ -448,7 +448,7 @@ export default function App() {
                     <line x1={seg.x1} y1={bracketY - 4} x2={seg.x1} y2={bracketY + 4} stroke={col} strokeWidth={seg.big ? 1.5 : 1} />
                     <line x1={seg.x2} y1={bracketY - 4} x2={seg.x2} y2={bracketY + 4} stroke={col} strokeWidth={seg.big ? 1.5 : 1} />
                     <text x={(seg.x1 + seg.x2) / 2} y={bracketY + 18} textAnchor="middle" fill={col} fontSize={seg.big ? 12 : 11} fontWeight="500">
-                      {seg.big ? "large Δc" : "Δc"}
+                      {seg.big ? "reduced bry Δc" : "reduced Δc"}
                     </text>
                   </g>
                 );
