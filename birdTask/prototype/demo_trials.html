@@ -188,14 +188,95 @@
     filter: drop-shadow(0 0 4px rgba(255,255,255,.12));
   }
 
-  .expl-el {
-    width: 14%;
-    transform: translate(-50%, -50%);
+  /* ─────────────────────────────────────────────
+     CSS Explosion: Combined ring + particles
+     Replaces the old expl.png image asset
+     ───────────────────────────────────────────── */
+
+  .explosion-container {
+    position: absolute;
+    width: 0;
+    height: 0;
     z-index: 6;
+    pointer-events: none;
+  }
+
+  /* ── Flash disc (bright center pop) ── */
+  .expl-flash {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: clamp(22px, 4.5vw, 55px);
+    height: clamp(22px, 4.5vw, 55px);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0.3);
     opacity: 0;
     pointer-events: none;
-    filter: drop-shadow(0 0 10px rgba(255,255,255,.16));
   }
+  .expl-flash.fire {
+    animation: flashPop 220ms ease-out forwards;
+  }
+  .expl-flash.reward {
+    background: radial-gradient(circle, rgba(255,248,190,.95), rgba(255,215,0,.45) 55%, transparent 100%);
+  }
+  .expl-flash.loss {
+    background: radial-gradient(circle, rgba(255,210,210,.95), rgba(255,68,68,.45) 55%, transparent 100%);
+  }
+
+  @keyframes flashPop {
+    0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
+    35%  { transform: translate(-50%,-50%) scale(1.15); opacity: .85; }
+    100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; }
+  }
+
+  /* ── Expanding ring ── */
+  .expl-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 0; height: 0;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .expl-ring.fire {
+    animation: ringExpand 400ms cubic-bezier(.22,.61,.36,1) forwards;
+  }
+  .expl-ring.reward {
+    border: 2.5px solid rgba(255, 215, 0, .65);
+    box-shadow: 0 0 16px 4px rgba(255, 215, 0, .25),
+                inset 0 0 10px rgba(255, 215, 0, .12);
+  }
+  .expl-ring.loss {
+    border: 2.5px solid rgba(255, 68, 68, .65);
+    box-shadow: 0 0 16px 4px rgba(255, 68, 68, .25),
+                inset 0 0 10px rgba(255, 68, 68, .12);
+  }
+
+  @keyframes ringExpand {
+    0%   { width: 0; height: 0; opacity: .9; }
+    45%  { opacity: .75; }
+    100% { width: clamp(65px, 10vw, 130px); height: clamp(65px, 10vw, 130px); opacity: 0; }
+  }
+
+  /* ── Particles ── */
+  .expl-particle {
+    position: absolute;
+    top: 50%; left: 50%;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+  .expl-particle.reward {
+    background: radial-gradient(circle, #fffbe0, #ffd700);
+    box-shadow: 0 0 4px rgba(255,215,0,.5);
+  }
+  .expl-particle.loss {
+    background: radial-gradient(circle, #ffd4d4, #ff4444);
+    box-shadow: 0 0 4px rgba(255,68,68,.5);
+  }
+
+  /* ─────────────────────────────────────────── */
 
   .bucket-wrap {
     position: absolute;
@@ -295,15 +376,8 @@
 
   @keyframes objDropSpread {
     0%   { top: 72%; transform: translateX(0) scale(0.8); }
-    15%  { top: 68%; transform: translateX(calc(var(--spread-x) * 0.2)) scale(1.1); } /* slight upward pop */
+    15%  { top: 68%; transform: translateX(calc(var(--spread-x) * 0.2)) scale(1.1); }
     100% { top: 105%; transform: translateX(var(--spread-x)) scale(1); }
-  }
-
-  /* FIXED: Renamed explodeAnim to lightBurst and added scale effect for realism */
-  @keyframes lightBurst {
-    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
-    50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
   }
 </style>
 </head>
@@ -325,7 +399,13 @@
   <div class="main-container" id="mc">
     <img class="asset drone-el" id="drone" src="assets/reward/drone0.png" alt="drone">
     <img class="asset bag-el" id="bag" src="assets/reward/supply-bag.png" alt="bag">
-    <img class="asset expl-el" id="expl" src="assets/shared/expl.png" alt="explosion">
+
+    <!-- CSS-driven explosion (replaces expl.png) -->
+    <div class="explosion-container" id="expl-container">
+      <div class="expl-flash reward" id="expl-flash"></div>
+      <div class="expl-ring reward" id="expl-ring"></div>
+      <!-- Particles spawned dynamically by JS -->
+    </div>
 
     <img class="drop-obj" id="g0" src="assets/reward/supply-dot.png" alt="">
     <img class="drop-obj" id="g1" src="assets/reward/supply-dot.png" alt="">
@@ -355,19 +435,19 @@
 </div>
 
 <div class="info">
-  demo_trial.html — asset-backed mock trial. Corresponds to trial.js + game.min.css + stimuli-details.js. No jsPsych.
+  demo_trial.html — asset-backed mock trial with CSS explosion (ring + particles). No jsPsych.
 </div>
 
 <script>
+  // ── Constants ──
   const COINS = 10;
   const COIN_DIST = [-4.25,-3,-1.75,-0.75,-0.25,0.25,0.75,1.75,3,4.25];
   const COIN_DUR  = [350,400,500,550,600,600,600,500,500,400];
-
   const BAG_POS = 64.156;
   const BIRD_POS = 60;
-
   const BAG_START_TOP = '18%';
   const IMPACT_TOP = '82%';
+  const PARTICLE_COUNT = 10;
 
   const MODE_ASSETS = {
     reward: {
@@ -397,12 +477,12 @@
     activeTimeouts.push(id);
     return id;
   }
-
   function clearAllTimeouts() {
     activeTimeouts.forEach(clearTimeout);
     activeTimeouts = [];
   }
 
+  // ── Input ──
   document.addEventListener('keydown', e => {
     if (running) return;
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
@@ -411,10 +491,7 @@
       document.getElementById('instr').style.opacity = '0';
     }
   });
-
-  document.addEventListener('keyup', e => {
-    delete keysDown[e.key];
-  });
+  document.addEventListener('keyup', e => { delete keysDown[e.key]; });
 
   function moveTick() {
     if (!running) {
@@ -426,21 +503,107 @@
   }
   moveTick();
 
+  // ── Visual mode ──
   function setVisualMode(mode) {
     const cfg = MODE_ASSETS[mode];
     document.getElementById('land').src = cfg.land;
     document.getElementById('drone').src = cfg.drone;
     document.getElementById('bag').src = cfg.bag;
     document.getElementById('stim').src = cfg.item;
-
-    const light = document.getElementById('light');
-    light.className = 'light-overlay' + (mode === 'loss' ? ' loss' : '');
-
-    for (let i = 0; i < COINS; i++) {
-      document.getElementById('g' + i).src = cfg.dot;
-    }
+    document.getElementById('light').className = 'light-overlay' + (mode === 'loss' ? ' loss' : '');
+    for (let i = 0; i < COINS; i++) document.getElementById('g'+i).src = cfg.dot;
   }
 
+  // ───────────────────────────────────────────────
+  //  CSS Explosion: ring + flash + particles
+  // ───────────────────────────────────────────────
+
+  function triggerExplosion(leftPercent, topPercent, mode) {
+    const container = document.getElementById('expl-container');
+    container.style.left = leftPercent + '%';
+    container.style.top = topPercent;
+
+    // Remove old particles
+    container.querySelectorAll('.expl-particle').forEach(p => p.remove());
+
+    // ── Flash ──
+    const flash = document.getElementById('expl-flash');
+    flash.className = 'expl-flash ' + mode;
+    void flash.offsetWidth;
+    flash.classList.add('fire');
+
+    // ── Ring ──
+    const ring = document.getElementById('expl-ring');
+    ring.className = 'expl-ring ' + mode;
+    void ring.offsetWidth;
+    ring.classList.add('fire');
+
+    // ── Particles ──
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const p = document.createElement('div');
+      p.className = 'expl-particle ' + mode;
+
+      // Distribute around a circle with jitter
+      const baseAngle = (2 * Math.PI / PARTICLE_COUNT) * i;
+      const jitter = (Math.random() - 0.5) * 0.55;
+      const angle = baseAngle + jitter;
+
+      // Randomise distance, size, and duration for organic feel
+      const dist = 22 + Math.random() * 35;     // 22–57 px
+      const dur  = 260 + Math.random() * 200;   // 260–460 ms
+      const size = 3 + Math.random() * 4;       // 3–7 px
+
+      p.style.width  = size + 'px';
+      p.style.height = size + 'px';
+
+      // Slight stagger so they don't all launch at once
+      const delay = Math.random() * 35;
+
+      // Animate via JS-driven keyframes (avoids cos/sin in CSS which
+      // isn't supported everywhere). We compute the end-point x/y and
+      // use a simple translate.
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+
+      p.style.transition = 'none';
+      p.style.opacity = '1';
+      p.style.transform = 'translate(-50%, -50%) translate(0px, 0px) scale(1)';
+
+      container.appendChild(p);
+      void p.offsetWidth; // reflow before animating
+
+      // requestAnimationFrame ensures the browser has painted the initial state
+      requestAnimationFrame(() => {
+        p.style.transition = `transform ${dur}ms cubic-bezier(.15,.75,.3,1),
+                              opacity ${dur}ms ease-out`;
+        p.style.transitionDelay = delay + 'ms';
+        p.style.transform = `translate(-50%, -50%) translate(${dx}px, ${dy}px) scale(0.25)`;
+        p.style.opacity = '0';
+      });
+
+      // Clean up DOM after animation
+      addTimeout(() => {
+        if (p.parentNode) p.remove();
+      }, dur + delay + 60);
+    }
+
+    // Reset flash & ring classes after their animations finish
+    addTimeout(() => {
+      flash.classList.remove('fire');
+      ring.classList.remove('fire');
+    }, 480);
+  }
+
+  function resetExplosion() {
+    const container = document.getElementById('expl-container');
+    container.querySelectorAll('.expl-particle').forEach(p => p.remove());
+    const flash = document.getElementById('expl-flash');
+    flash.className = 'expl-flash reward';
+    const ring = document.getElementById('expl-ring');
+    ring.className = 'expl-ring reward';
+  }
+
+  // ── Hard reset all animated elements ──
   function hardResetAnimatedElements() {
     const bag = document.getElementById('bag');
     bag.style.animation = 'none';
@@ -449,13 +612,7 @@
     bag.style.left = '50%';
     bag.style.transform = 'translateX(-50%)';
 
-    const expl = document.getElementById('expl');
-    expl.className = 'asset expl-el';
-    expl.style.animation = 'none';
-    expl.style.opacity = '0';
-    expl.style.top = IMPACT_TOP;
-    expl.style.left = '50%';
-    expl.style.transform = 'translate(-50%, -50%) scale(0.4)';
+    resetExplosion();
 
     for (let i = 0; i < COINS; i++) {
       const obj = document.getElementById('g' + i);
@@ -468,12 +625,10 @@
     }
 
     void bag.offsetWidth;
-    void expl.offsetWidth;
-    for (let i = 0; i < COINS; i++) {
-      void document.getElementById('g' + i).offsetWidth;
-    }
+    for (let i = 0; i < COINS; i++) void document.getElementById('g'+i).offsetWidth;
   }
 
+  // ── Run one trial ──
   function runTrial(mode) {
     if (running) return;
     running = true;
@@ -490,12 +645,14 @@
 
     const bagPos = BAG_POS;
 
+    // Show drone
     const drone = document.getElementById('drone');
     drone.style.left = BIRD_POS + '%';
     drone.style.visibility = 'visible';
 
     document.getElementById('light').style.opacity = mode === 'reward' ? '.12' : '.18';
 
+    // Phase 1: bag drop
     addTimeout(() => {
       const bag = document.getElementById('bag');
       bag.style.animation = 'none';
@@ -505,23 +662,19 @@
       bag.style.top = BAG_START_TOP;
       bag.style.animation = 'bagdrop 1000ms ease-in forwards';
 
+      // Phase 2: impact → explosion → coins
       addTimeout(() => {
         bag.style.opacity = '0';
         bag.style.animation = 'none';
 
-        const expl = document.getElementById('expl');
-        expl.className = 'asset expl-el' + (mode === 'loss' ? ' loss' : '');
-        expl.style.animation = 'none';
-        void expl.offsetWidth;
-        expl.style.left = bagPos + '%';
-        expl.style.top = IMPACT_TOP;
-        expl.style.animation = 'lightBurst 260ms ease-out forwards';
+        // 🔥 CSS explosion
+        triggerExplosion(bagPos, IMPACT_TOP, mode);
 
+        // Coin drop
         const captureIndices = [];
 
         for (let i = 0; i < COINS; i++) {
           const obj = document.getElementById('g' + i);
-
           obj.style.animation = 'none';
           obj.style.visibility = 'hidden';
           obj.style.top = '72%';
@@ -530,37 +683,33 @@
           void obj.offsetWidth;
 
           obj.style.visibility = 'visible';
-
-          // Dynamically set the X spread based on your existing COIN_DIST array
           obj.style.setProperty('--spread-x', (COIN_DIST[i] * 0.5) + 'vw');
-          
-          // Apply the single dynamic animation
           obj.style.animation = `objDropSpread ${COIN_DUR[i]}ms cubic-bezier(0.4, 0, 1, 1) forwards`;
 
+          // Capture check at capFrac of duration
           const capFrac = 19 / 30;
-
           addTimeout(() => {
             const objEl = document.getElementById('g' + i);
             const bucketEl = document.getElementById('bucket');
             if (!objEl || !bucketEl) return;
-
             const or = objEl.getBoundingClientRect();
             const br = bucketEl.getBoundingClientRect();
             const ow = or.width || 8;
             const overlap = Math.max(0, Math.min(or.right, br.right) - Math.max(or.left, br.left));
-
             if (overlap >= ow) {
               captureIndices.push(i);
               objEl.style.visibility = 'hidden';
             }
           }, COIN_DUR[i] * capFrac);
 
+          // Hide when animation done
           addTimeout(() => {
             const objEl = document.getElementById('g' + i);
             if (objEl) objEl.style.visibility = 'hidden';
           }, COIN_DUR[i] + 50);
         }
 
+        // Phase 3: feedback + stimulus
         const maxDur = Math.max(...COIN_DUR);
         addTimeout(() => {
           const captureCount = captureIndices.length;
@@ -581,15 +730,15 @@
           fb.style.color = color;
           fb.style.opacity = '1';
 
-          const stim = document.getElementById('stim');
-          stim.style.opacity = '1';
+          document.getElementById('stim').style.opacity = '1';
 
           document.getElementById('status').textContent =
             `Caught ${captureCount}/10 → Value: ${displayText} (${mode} mode)`;
 
+          // Phase 4: clear and re-enable
           addTimeout(() => {
             fb.style.opacity = '0';
-            stim.style.opacity = '0';
+            document.getElementById('stim').style.opacity = '0';
             document.getElementById('btn-go-reward').disabled = false;
             document.getElementById('btn-go-loss').disabled = false;
             running = false;
@@ -602,13 +751,13 @@
     }, 300);
   }
 
+  // ── Reset ──
   function resetTrial() {
     clearAllTimeouts();
     running = false;
 
     document.getElementById('btn-go-reward').disabled = false;
     document.getElementById('btn-go-loss').disabled = false;
-
     document.getElementById('drone').style.visibility = 'hidden';
     document.getElementById('fb').style.opacity = '0';
     document.getElementById('stim').style.opacity = '0';
@@ -623,9 +772,9 @@
     document.getElementById('status').textContent = 'Move shield with ← → then click a drop button';
   }
 
+  // ── Init ──
   setVisualMode('reward');
   resetTrial();
 </script>
 </body>
 </html>
-
