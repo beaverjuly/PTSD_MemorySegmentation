@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo: Feedback &amp; Value Mapping</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: #0e1117;
+    color: #c9d1d9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+  }
+
+  h1 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #8b949e;
+    margin-bottom: 30px;
+  }
+
+  /* ── Mode selector ── */
+  .modes {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 30px;
+  }
+  .mode-btn {
+    padding: 10px 24px;
+    border: 2px solid #30363d;
+    border-radius: 8px;
+    background: transparent;
+    color: #8b949e;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .mode-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+  .mode-btn.active { background: #1f2937; border-color: #58a6ff; color: #58a6ff; }
+
+  /* ── Capture slider ── */
+  .slider-section {
+    text-align: center;
+    margin-bottom: 36px;
+    width: 100%;
+    max-width: 500px;
+  }
+  .slider-label {
+    font-size: 12px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: center;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 300px;
+    height: 6px;
+    border-radius: 3px;
+    background: #30363d;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #58a6ff;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(88,166,255,.4);
+  }
+  .capture-val {
+    font-size: 28px;
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+    color: #e6edf3;
+  }
+
+  /* ── Quick buttons ── */
+  .quick-btns {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  .q-btn {
+    width: 36px; height: 30px;
+    border: 1px solid #30363d;
+    border-radius: 5px;
+    background: #161b22;
+    color: #8b949e;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .q-btn:hover { background: #1f2937; border-color: #58a6ff; color: #c9d1d9; }
+
+  /* ── Feedback display ── */
+  .feedback-area {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 36px;
+  }
+  .fb-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px 32px;
+    text-align: center;
+    min-width: 180px;
+  }
+  .fb-card-label {
+    font-size: 11px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+  .fb-box {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 16px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.06);
+    min-width: 100px;
+    transition: color .2s;
+  }
+
+  /* ── Mapping table ── */
+  .mapping-table {
+    width: 100%;
+    max-width: 700px;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  .mapping-table th {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8b949e;
+    padding: 8px 12px;
+    border-bottom: 1px solid #30363d;
+    text-align: center;
+  }
+  .mapping-table td {
+    padding: 6px 12px;
+    text-align: center;
+    font-size: 13px;
+    border-bottom: 1px solid #1c2128;
+  }
+  .mapping-table tr.highlight td {
+    background: rgba(88,166,255,.08);
+  }
+  .mapping-table .val-pos { color: #39FF14; }
+  .mapping-table .val-neg { color: #ff4444; }
+  .mapping-table .val-zero { color: #ffd700; }
+
+  /* ── Info footer ── */
+  .info {
+    margin-top: auto;
+    padding-top: 20px;
+    font-size: 11px;
+    color: #484f58;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Feedback &amp; Value Mapping</h1>
+
+<div class="modes">
+  <button class="mode-btn active" id="m-original" onclick="setMode('original')">Original</button>
+  <button class="mode-btn" id="m-reward" onclick="setMode('reward')">Reward</button>
+  <button class="mode-btn" id="m-loss" onclick="setMode('loss')">Loss</button>
+  <button class="mode-btn" id="m-mixed" onclick="setMode('mixed')">Mixed</button>
+</div>
+
+<div class="slider-section">
+  <div class="slider-label">captureCount (coins caught)</div>
+  <div class="slider-row">
+    <span style="color:#ff4444;font-size:11px">0</span>
+    <input type="range" id="slider" min="0" max="10" value="7" oninput="update()">
+    <span style="color:#39FF14;font-size:11px">10</span>
+    <span class="capture-val" id="cap-display">7</span>
+  </div>
+  <div class="quick-btns">
+    <button class="q-btn" onclick="setCapture(0)">0</button>
+    <button class="q-btn" onclick="setCapture(1)">1</button>
+    <button class="q-btn" onclick="setCapture(2)">2</button>
+    <button class="q-btn" onclick="setCapture(3)">3</button>
+    <button class="q-btn" onclick="setCapture(4)">4</button>
+    <button class="q-btn" onclick="setCapture(5)">5</button>
+    <button class="q-btn" onclick="setCapture(6)">6</button>
+    <button class="q-btn" onclick="setCapture(7)">7</button>
+    <button class="q-btn" onclick="setCapture(8)">8</button>
+    <button class="q-btn" onclick="setCapture(9)">9</button>
+    <button class="q-btn" onclick="setCapture(10)">10</button>
+  </div>
+</div>
+
+<div class="feedback-area">
+  <div class="fb-card">
+    <div class="fb-card-label">Raw Accuracy</div>
+    <div class="fb-box" id="fb-raw" style="color:#c9d1d9">7</div>
+  </div>
+  <div class="fb-card">
+    <div class="fb-card-label">Mapped Value</div>
+    <div class="fb-box" id="fb-mapped">7</div>
+  </div>
+</div>
+
+<table class="mapping-table" id="map-table">
+  <thead>
+    <tr>
+      <th>Caught</th>
+      <th>Original</th>
+      <th>Reward</th>
+      <th>Loss</th>
+      <th>Mixed</th>
+    </tr>
+  </thead>
+  <tbody id="map-body"></tbody>
+</table>
+
+<div class="info">
+  demo_feedback.html — Corresponds to trial.js feedback logic. No animation, no jsPsych.
+</div>
+
+<script>
+  let mode = 'original';
+
+  function mapValue(c, m) {
+    if (m === 'original') return c;
+    if (m === 'reward')  return c;
+    if (m === 'loss')    return c - 10;
+    if (m === 'mixed')   return c - 5;
+    return c;
+  }
+
+  function formatValue(v, m) {
+    if (m === 'original') return String(v);
+    if (v > 0)  return '+' + v;
+    if (v === 0) return '0';
+    return String(v);
+  }
+
+  function colorForValue(v, m) {
+    if (m === 'original') {
+      if (v === 10) return '#39FF14';
+      if (v === 0)  return '#ff4444';
+      return '#c9d1d9';
+    }
+    if (v > 0)  return '#39FF14';
+    if (v < 0)  return '#ff4444';
+    return '#ffd700';
+  }
+
+  function update() {
+    const c = parseInt(document.getElementById('slider').value);
+    document.getElementById('cap-display').textContent = c;
+    document.getElementById('fb-raw').textContent = c;
+
+    const v = mapValue(c, mode);
+    const fb = document.getElementById('fb-mapped');
+    fb.textContent = formatValue(v, mode);
+    fb.style.color = colorForValue(v, mode);
+
+    // Highlight table row
+    const rows = document.querySelectorAll('#map-body tr');
+    rows.forEach((r, i) => r.classList.toggle('highlight', i === c));
+  }
+
+  function setCapture(n) {
+    document.getElementById('slider').value = n;
+    update();
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('m-' + m).classList.add('active');
+    update();
+  }
+
+  // Build table
+  function buildTable() {
+    const tbody = document.getElementById('map-body');
+    tbody.innerHTML = '';
+    for (let c = 0; c <= 10; c++) {
+      const tr = document.createElement('tr');
+      const modes = ['original','reward','loss','mixed'];
+      let html = `<td>${c}</td>`;
+      modes.forEach(m => {
+        const v = mapValue(c, m);
+        const f = formatValue(v, m);
+        const col = colorForValue(v, m);
+        const cls = v > 0 ? 'val-pos' : (v < 0 ? 'val-neg' : 'val-zero');
+        html += `<td class="${m === 'original' ? '' : cls}" style="color:${col}">${f}</td>`;
+      });
+      tr.innerHTML = html;
+      tbody.appendChild(tr);
+    }
+  }
+
+  buildTable();
+  update();
+</script>
+</body>
+</html>

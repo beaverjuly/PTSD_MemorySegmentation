@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo: One Mock Trial (Asset-backed)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0e1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --reward: #39ff14;
+    --loss: #ff4444;
+    --neutral: #ffd700;
+  }
+
+  body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 200;
+    flex-wrap: wrap;
+  }
+
+  .toolbar h1 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-right: 12px;
+  }
+
+  .tb-btn {
+    padding: 7px 18px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .tb-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+
+  .tb-btn.go-reward {
+    border-color: var(--reward);
+    color: var(--reward);
+    background: rgba(57,255,20,.08);
+  }
+
+  .tb-btn.go-loss {
+    border-color: var(--loss);
+    color: var(--loss);
+    background: rgba(255,68,68,.08);
+  }
+
+  .tb-btn:disabled {
+    opacity: .35;
+    cursor: default;
+    border-color: var(--border);
+    color: #484f58;
+    background: transparent;
+  }
+
+  .status {
+    font-size: 11px;
+    color: #6e7681;
+    margin-left: 10px;
+  }
+
+  .game-container {
+    position: relative;
+    width: min(1080px, 82vw);
+    height: min(740px, 78vh);
+    margin: auto;
+    border: 3px solid #807256;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #000;
+  }
+
+  .bg-sky,
+  .bg-land,
+  .light-overlay,
+  .main-container {
+    position: absolute;
+    inset: 0;
+  }
+
+  .bg-sky {
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .light-overlay {
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s ease;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(255,255,255,.18), transparent 26%),
+      linear-gradient(to bottom, rgba(255,234,97,.12), rgba(0,0,0,0));
+  }
+
+  .light-overlay.loss {
+    background:
+      radial-gradient(circle at 50% 18%, rgba(255,80,80,.14), transparent 26%),
+      linear-gradient(to bottom, rgba(80,0,120,.20), rgba(0,0,0,0));
+  }
+
+  .bg-land {
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    bottom: 0;
+    top: auto;
+    object-fit: cover;
+    object-position: center bottom;
+  }
+
+  .main-container {
+    z-index: 3;
+  }
+
+  .asset {
+    position: absolute;
+    user-select: none;
+    pointer-events: none;
+    image-rendering: auto;
+  }
+
+  .drone-el {
+    top: 4%;
+    width: 9%;
+    transform: translateX(-50%);
+    z-index: 6;
+    visibility: hidden;
+    filter: drop-shadow(0 8px 10px rgba(0,0,0,.4));
+  }
+
+  .bag-el {
+    width: 7%;
+    transform: translateX(-50%);
+    z-index: 7;
+    opacity: 0;
+    top: 12%;
+    filter: drop-shadow(0 8px 10px rgba(0,0,0,.35));
+  }
+
+  .drop-obj {
+    position: absolute;
+    width: 3vw;
+    min-width: 20px;
+    max-width: 40px;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    z-index: 8;
+    visibility: hidden;
+    pointer-events: none;
+    filter: drop-shadow(0 0 4px rgba(255,255,255,.12));
+  }
+
+  .expl-el {
+    width: 14%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,.16));
+  }
+
+  .bucket-wrap {
+    position: absolute;
+    bottom: -4%;
+    width: 15%;
+    aspect-ratio: 1.1 / 1;
+    transform: translateX(-50%);
+    z-index: 9;
+    pointer-events: none;
+  }
+
+  .bucket-base,
+  .bucket-glow {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .bucket-glow {
+    opacity: .25;
+  }
+
+  .fb-overlay {
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    font-size: clamp(15px, 2vw, 29px);
+    font-weight: 800;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    text-shadow: 0 2px 12px rgba(0,0,0,.65);
+    background: rgba(0,0,0,.35);
+    padding: 8px 28px;
+    border-radius: 10px;
+  }
+
+  .stim-img {
+    position: absolute;
+    top: 33%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    z-index: 15;
+    opacity: 0;
+    background: rgba(255,255,255,.08);
+    border: 2px solid rgba(255,255,255,.18);
+    border-radius: 8px;
+  }
+
+  .instructions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    z-index: 50;
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    background: rgba(14,17,23,.86);
+    padding: 24px 36px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    pointer-events: none;
+    line-height: 1.7;
+  }
+
+  .instructions kbd {
+    background: var(--border);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #e6edf3;
+  }
+
+  .info {
+    padding: 8px 20px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 10px;
+    color: #6e7681;
+    flex-shrink: 0;
+  }
+
+  @keyframes bagdrop {
+    0%   { top: 12%; opacity: 1; }
+    80%  { top: 72%; opacity: 1; }
+    100% { top: 72%; opacity: 0; }
+  }
+
+  @keyframes objDrop {
+    from { top: 72%; }
+    to   { top: 105%; }
+  }
+
+  @keyframes objDropLeft {
+    from { top: 72%; transform: translateX(0); }
+    to   { top: 105%; transform: translateX(-15px); }
+  }
+
+  @keyframes objDropRight {
+    from { top: 72%; transform: translateX(0); }
+    to   { top: 105%; transform: translateX(15px); }
+  }
+
+  @keyframes explodeAnim {
+    from { opacity: 0.2; }
+    to   { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <h1>Mock Trial</h1>
+  <button class="tb-btn go-reward" id="btn-go-reward" onclick="runTrial('reward')">Drop Reward</button>
+  <button class="tb-btn go-loss" id="btn-go-loss" onclick="runTrial('loss')">Drop Hazard</button>
+  <button class="tb-btn" id="btn-reset" onclick="resetTrial()">Reset</button>
+  <span class="status" id="status">Move shield with ← → then click a drop button</span>
+</div>
+
+<div class="game-container" id="gc">
+  <img class="bg-sky" id="sky" src="assets/shared/sky.png" alt="sky background">
+  <div class="light-overlay" id="light"></div>
+  <img class="bg-land" id="land" src="assets/shared/layer1.png" alt="land background">
+
+  <div class="main-container" id="mc">
+    <img class="asset drone-el" id="drone" src="assets/reward/drone0.png" alt="drone">
+    <img class="asset bag-el" id="bag" src="assets/reward/supply-bag.png" alt="bag">
+    <img class="asset expl-el" id="expl" src="assets/shared/expl.png" alt="explosion">
+
+    <img class="drop-obj" id="g0" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g1" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g2" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g3" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g4" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g5" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g6" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g7" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g8" src="assets/reward/supply-dot.png" alt="">
+    <img class="drop-obj" id="g9" src="assets/reward/supply-dot.png" alt="">
+
+    <div class="bucket-wrap" id="bucket" style="left:50%">
+      <img class="bucket-base" src="assets/shared/bucket1.png" alt="collector shield">
+      <img class="bucket-glow" src="assets/shared/bucket2.png" alt="">
+    </div>
+
+    <div class="fb-overlay" id="fb"></div>
+
+    <img class="stim-img" id="stim" src="assets/items/anchor.jpg" alt="example item">
+
+    <div class="instructions" id="instr">
+      <kbd>←</kbd> <kbd>→</kbd> to move collector / shield<br>
+      Then click <strong>Drop Reward</strong> or <strong>Drop Hazard</strong>
+    </div>
+  </div>
+</div>
+
+<div class="info">
+  demo_trial.html — asset-backed mock trial. Corresponds to trial.js + game.min.css + stimuli-details.js. No jsPsych.
+</div>
+
+<script>
+  const COINS = 10;
+  const COIN_DIST = [-4.25,-3,-1.75,-0.75,-0.25,0.25,0.75,1.75,3,4.25];
+  const COIN_DUR  = [350,400,500,550,600,600,600,500,500,400];
+
+  const BAG_POS = 64.156;
+  const BIRD_POS = 60;
+
+  const BAG_START_TOP = '18%';
+  const IMPACT_TOP = '82%';
+
+  const MODE_ASSETS = {
+    reward: {
+      land: 'assets/shared/layer1.png',
+      drone: 'assets/reward/drone0.png',
+      bag: 'assets/reward/supply-bag.png',
+      dot: 'assets/reward/supply-dot.png',
+      item: 'assets/items/anchor.jpg'
+    },
+    loss: {
+      land: 'assets/shared/layer3.png',
+      drone: 'assets/reward/drone0.png',
+      bag: 'assets/loss/hazard-bag.png',
+      dot: 'assets/loss/hazard-dot.png',
+      item: 'assets/items/anchor.jpg'
+    }
+  };
+
+  let bucketPos = 50;
+  let running = false;
+  const step = 2;
+  const keysDown = {};
+  let activeTimeouts = [];
+
+  function addTimeout(fn, ms) {
+    const id = setTimeout(fn, ms);
+    activeTimeouts.push(id);
+    return id;
+  }
+
+  function clearAllTimeouts() {
+    activeTimeouts.forEach(clearTimeout);
+    activeTimeouts = [];
+  }
+
+  document.addEventListener('keydown', e => {
+    if (running) return;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      keysDown[e.key] = true;
+      document.getElementById('instr').style.opacity = '0';
+    }
+  });
+
+  document.addEventListener('keyup', e => {
+    delete keysDown[e.key];
+  });
+
+  function moveTick() {
+    if (!running) {
+      if (keysDown['ArrowLeft'])  bucketPos = Math.max(10, bucketPos - step);
+      if (keysDown['ArrowRight']) bucketPos = Math.min(90, bucketPos + step);
+      document.getElementById('bucket').style.left = bucketPos + '%';
+    }
+    requestAnimationFrame(moveTick);
+  }
+  moveTick();
+
+  function setVisualMode(mode) {
+    const cfg = MODE_ASSETS[mode];
+    document.getElementById('land').src = cfg.land;
+    document.getElementById('drone').src = cfg.drone;
+    document.getElementById('bag').src = cfg.bag;
+    document.getElementById('stim').src = cfg.item;
+
+    const light = document.getElementById('light');
+    light.className = 'light-overlay' + (mode === 'loss' ? ' loss' : '');
+
+    for (let i = 0; i < COINS; i++) {
+      document.getElementById('g' + i).src = cfg.dot;
+    }
+  }
+
+  function hardResetAnimatedElements() {
+    const bag = document.getElementById('bag');
+    bag.style.animation = 'none';
+    bag.style.opacity = '0';
+    bag.style.top = BAG_START_TOP;
+    bag.style.left = '50%';
+    bag.style.transform = 'translateX(-50%)';
+
+    const expl = document.getElementById('expl');
+    expl.style.animation = 'none';
+    expl.style.opacity = '0';
+    expl.style.top = IMPACT_TOP;
+    expl.style.left = '50%';
+    expl.style.transform = 'translate(-50%, -50%)';
+
+    for (let i = 0; i < COINS; i++) {
+      const obj = document.getElementById('g' + i);
+      obj.style.animation = 'none';
+      obj.style.visibility = 'hidden';
+      obj.style.opacity = '1';
+      obj.style.top = IMPACT_TOP;
+      obj.style.left = '50%';
+      obj.style.transform = 'translateX(0)';
+    }
+
+    void bag.offsetWidth;
+    void expl.offsetWidth;
+    for (let i = 0; i < COINS; i++) {
+      void document.getElementById('g' + i).offsetWidth;
+    }
+  }
+
+  function runTrial(mode) {
+    if (running) return;
+    running = true;
+
+    clearAllTimeouts();
+    hardResetAnimatedElements();
+
+    document.getElementById('btn-go-reward').disabled = true;
+    document.getElementById('btn-go-loss').disabled = true;
+    document.getElementById('instr').style.opacity = '0';
+    document.getElementById('status').textContent = 'Trial running…';
+
+    setVisualMode(mode);
+
+    const bagPos = BAG_POS;
+
+    const drone = document.getElementById('drone');
+    drone.style.left = BIRD_POS + '%';
+    drone.style.visibility = 'visible';
+
+    document.getElementById('light').style.opacity = mode === 'reward' ? '.12' : '.18';
+
+    addTimeout(() => {
+      const bag = document.getElementById('bag');
+      bag.style.animation = 'none';
+      void bag.offsetWidth;
+      bag.style.left = bagPos + '%';
+      bag.style.opacity = '1';
+      bag.style.top = '12%';
+      bag.style.animation = 'bagdrop 1000ms ease-in forwards';
+
+      addTimeout(() => {
+        bag.style.opacity = '0';
+        bag.style.animation = 'none';
+
+        const expl = document.getElementById('expl');
+        expl.style.animation = 'none';
+        void expl.offsetWidth;
+        expl.style.left = bagPos + '%';
+        expl.style.top = IMPACT_TOP;
+        expl.style.opacity = '0.2';
+        expl.style.animation = 'explodeAnim 300ms linear forwards';
+
+        const captureIndices = [];
+
+        for (let i = 0; i < COINS; i++) {
+          const obj = document.getElementById('g' + i);
+
+          obj.style.animation = 'none';
+          obj.style.visibility = 'hidden';
+          obj.style.top = '72%';
+          obj.style.left = (bagPos + COIN_DIST[i]) + '%';
+          obj.style.transform = 'translateX(0)';
+          void obj.offsetWidth;
+
+          obj.style.visibility = 'visible';
+
+          const half = (COINS - 1) / 2;
+          if (i < half) {
+            obj.style.animation = `objDropLeft ${COIN_DUR[i]}ms cubic-bezier(.7,.3,1,1) forwards`;
+          } else if (i > half) {
+            obj.style.animation = `objDropRight ${COIN_DUR[i]}ms cubic-bezier(.7,.3,1,1) forwards`;
+          } else {
+            obj.style.animation = `objDrop ${COIN_DUR[i]}ms cubic-bezier(.7,.3,1,1) forwards`;
+          }
+
+          const capFrac = 19 / 30;
+
+          addTimeout(() => {
+            const objEl = document.getElementById('g' + i);
+            const bucketEl = document.getElementById('bucket');
+            if (!objEl || !bucketEl) return;
+
+            const or = objEl.getBoundingClientRect();
+            const br = bucketEl.getBoundingClientRect();
+            const ow = or.width || 8;
+            const overlap = Math.max(0, Math.min(or.right, br.right) - Math.max(or.left, br.left));
+
+            if (overlap >= ow) {
+              captureIndices.push(i);
+              objEl.style.visibility = 'hidden';
+            }
+          }, COIN_DUR[i] * capFrac);
+
+          addTimeout(() => {
+            const objEl = document.getElementById('g' + i);
+            if (objEl) objEl.style.visibility = 'hidden';
+          }, COIN_DUR[i] + 50);
+        }
+
+        const maxDur = Math.max(...COIN_DUR);
+        addTimeout(() => {
+          const captureCount = captureIndices.length;
+          const valueChange = (mode === 'reward') ? captureCount : (captureCount - 10);
+
+          let displayText;
+          if (valueChange > 0) displayText = `+${valueChange}`;
+          else if (valueChange < 0) displayText = String(valueChange);
+          else displayText = '0';
+
+          let color;
+          if (valueChange > 0) color = '#39FF14';
+          else if (valueChange < 0) color = '#ff4444';
+          else color = '#ffd700';
+
+          const fb = document.getElementById('fb');
+          fb.textContent = displayText;
+          fb.style.color = color;
+          fb.style.opacity = '1';
+
+          const stim = document.getElementById('stim');
+          stim.style.opacity = '1';
+
+          document.getElementById('status').textContent =
+            `Caught ${captureCount}/10 → Value: ${displayText} (${mode} mode)`;
+
+          addTimeout(() => {
+            fb.style.opacity = '0';
+            stim.style.opacity = '0';
+            document.getElementById('btn-go-reward').disabled = false;
+            document.getElementById('btn-go-loss').disabled = false;
+            running = false;
+            document.getElementById('status').textContent = 'Done. Reset or drop again.';
+          }, 2500);
+
+        }, maxDur + 100);
+
+      }, 1200);
+    }, 300);
+  }
+
+  function resetTrial() {
+    clearAllTimeouts();
+    running = false;
+
+    document.getElementById('btn-go-reward').disabled = false;
+    document.getElementById('btn-go-loss').disabled = false;
+
+    document.getElementById('drone').style.visibility = 'hidden';
+    document.getElementById('fb').style.opacity = '0';
+    document.getElementById('stim').style.opacity = '0';
+    document.getElementById('light').style.opacity = '0';
+    document.getElementById('instr').style.opacity = '1';
+
+    hardResetAnimatedElements();
+
+    bucketPos = 50;
+    document.getElementById('bucket').style.left = '50%';
+    setVisualMode('reward');
+    document.getElementById('status').textContent = 'Move shield with ← → then click a drop button';
+  }
+
+  setVisualMode('reward');
+  resetTrial();
+</script>
+</body>
+</html>

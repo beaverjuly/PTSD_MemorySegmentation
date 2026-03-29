@@ -26,21 +26,20 @@
   <script src="../static/js/jspsych-screen-check.js"></script>
 
   <!-- Load RPM -->
-<!--   <script src="../static/rpm/rpm_tfa.js"></script>
+  <!--   <script src="../static/rpm/rpm_tfa.js"></script>
   <script src="../static/rpm/rpm_tfb.js"></script>
   <script src="../static/rpm/jspsych-rpm.js"></script> -->
 
   <!-- Load experiment -->
   <script src="../static/task/trial.js" type="text/javascript"></script>
-  <!-- Load the memory task plugin. This plug‑in implements the post‑block
-       memory test used in MOD9. It must be loaded after trial.js so
-       that it can register its own plugin type. -->
+  <!-- Load the memory task plugin. -->
   <script src="../static/task/memory_task.js" type="text/javascript"></script>
-  <!-- Load the delay discounting task for MOD10. This defines the
-       runDelayDiscounting() helper and the custom delay‑discounting
-       plugin. It must be loaded after jsPsych is available and
-       before it is used below. -->
-  <script src="../static/task/discounting_task.js" type="text/javascript"></script>
+
+  <!-- ====================================================================
+       DISCOUNTING TASK — COMMENTED OUT (preserved for future restoration)
+       ==================================================================== -->
+  <!-- <script src="../static/task/discounting_task.js" type="text/javascript"></script> -->
+
   <link href="../static/task/game.min.css" rel="stylesheet" type="text/css"></link>
   <script src="../static/task/stimuli.js" type="text/javascript"></script>
   <script src="../static/task/stimuli-details.js" type="text/javascript"></script>
@@ -59,13 +58,51 @@
 <body></body>
 <script>
 
+  // ========================================================================
+  // UNIFIED DEV MODE CONTROLS
+  // ========================================================================
+  // URL query parameters:
+  //   dev=1              — enable developer mode
+  //   stage=<string>     — which stage to run:
+  //       bird           — bird-game trials only
+  //       memory         — memory task only (seeds fake data)
+  //       termination    — standalone dev termination screen
+  //       full           — full no-instructions experiment (default)
+  //   ntrials=<int>      — cap bird trials per block (dev mode only)
+  //   block=<int>        — which block to target (for memory stage; default 1)
+  // ========================================================================
+  var _devParams = new URLSearchParams(window.location.search);
+  var DEV_MODE   = _devParams.get('dev') === '1';
+  var DEV_STAGE  = _devParams.get('stage') || 'full';
+  var DEV_NTRIALS = parseInt(_devParams.get('ntrials'), 10) || 0;
+  var DEV_BLOCK   = parseInt(_devParams.get('block'), 10) || 1;
+
+  if (DEV_MODE) {
+    console.log('[DEV] Developer mode ENABLED (noinstr)');
+    console.log('[DEV] stage=' + DEV_STAGE + ', ntrials=' + DEV_NTRIALS + ', block=' + DEV_BLOCK);
+  }
+
+  // ========================================================================
+  // LEGACY DEV SKIP MODE — COMMENTED OUT
+  // ========================================================================
+  // The following legacy dev mechanisms have been replaced by the unified
+  // URL-param system above. They are preserved here for reference.
+  //
+  // --- LEGACY: skipblock query parameter ---
+  // Previously, adding ?skipblock=1 to the URL would seed fake data and
+  // jump directly to the discounting + memory tasks. This has been
+  // superseded by ?dev=1&stage=memory (or stage=bird, etc.).
+  //
+  // --- LEGACY: DEV_SKIP_MODE constant ---
+  // Previously, a const DEV_SKIP_MODE could be set to "none",
+  // "discounting", or "memory" to skip parts of the experiment.
+  // This has been superseded by the URL param system.
+  // ========================================================================
 
   //------------------------------------//
   // Initial verification
   //------------------------------------//
 
-  // Display alert message on back/refresh.
-  // https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onbeforeunload
   function verify_unload(e){
     e.preventDefault();
     (e || window.event).returnValue = null;
@@ -73,15 +110,6 @@
   };
   window.addEventListener("beforeunload", verify_unload);
 
-  // // Add version metadata.
-  // jsPsych.data.addProperties({
-  //   task_version: 'v2.0',
-  //   stimuli_version: stimuli_version,
-  //   factors_vol: factors_vol,
-  //   factors_unp: factors_unp,
-  // });
-
-  // say welcome and add exp properties to data.
   var randomized = jsPsych.randomization.shuffle([0,1,2,3]);
 
   var welcome = {
@@ -98,9 +126,7 @@
   //------------------------------------//
   // A function for creating main trial sequences
   //------------------------------------//
-  /**
-   * Load the list of stimulus images from the stimulus_set directory. 
-   */
+
   var stimulus_set_images = [
     "../static/img/stimulus_set/aceofdiamond.jpg",
     "../static/img/stimulus_set/acousticguitar02.jpg",
@@ -304,18 +330,19 @@
     "../static/img/stimulus_set/yarn.jpg",
   ];
 
-  // Shuffle the stimulus set once at the beginning of the experiment.  This
-  // randomisation ensures that each of the four 50‑trial blocks uses a
-  // unique subset of 50 images without replacement.  The memory task
-  // relies on the stim_img stored in each trial's data, so shuffling
-  // here does not interfere with later retrieval.
+  // Shuffle the stimulus set once at the beginning of the experiment.
   stimulus_set_images = jsPsych.randomization.shuffle(stimulus_set_images);
 
-  // Define full-screen background images for each block. These will be
-  // cycled through sequentially (one per block) to cue the participant
-  // that a new context has begun. The paths are relative to this HTML
-  // file.
-  // Sky background (always the same for all blocks)
+  // In dev mode, optionally restrict stimulus set for faster testing.
+  if (DEV_MODE && DEV_NTRIALS > 0) {
+    var _devSubsetSize = Math.max(DEV_NTRIALS * 4, 50);
+    if (stimulus_set_images.length > _devSubsetSize) {
+      stimulus_set_images = stimulus_set_images.slice(0, _devSubsetSize);
+      console.log('[DEV] Restricted stimulus_set_images to ' + _devSubsetSize + ' items');
+    }
+  }
+
+  // Define backgrounds.
   const sky_background = '../static/img/block_backgrounds/sky.png';
   const block_land_backgrounds = [
     '../static/img/block_backgrounds/layer1.png',
@@ -323,12 +350,10 @@
     '../static/img/block_backgrounds/layer3.png',
     '../static/img/block_backgrounds/layer4.png'
   ];
-  // Define a unique practice background used for all practice trials.
   const practice_land_background = '../static/img/block_backgrounds/practice_land_background.png';
 
-  // Expose the sky background globally so that the delay discounting
-  // plugin can access it when composing layered backgrounds.
   window.sky_background = sky_background;
+
   var make_trials = function(practice_no, randomized) {
     var num_trials = 10;
 
@@ -344,10 +369,8 @@
     var warning_threshold = 16;
     var strong_warning = false;
 
-    // Track the previous trial's coin catch count for quality check logic
     var prev_coins_caught = null;
 
-    // Practice vs main trial configuration
     if (practice_no == 1) {
         is_moving_practice = true;
         show_missing = true;
@@ -374,6 +397,12 @@
         num_trials = 50;
         bag_position = main_bag_position;
         bird_position = main_bird_position;
+
+        // DEV MODE: cap main-block trial count if ntrials is set
+        if (DEV_MODE && DEV_NTRIALS > 0) {
+          num_trials = Math.min(num_trials, DEV_NTRIALS);
+          console.log('[DEV] Capping main block trials to ' + num_trials);
+        }
     }
 
     var stayed_threshold = 4;
@@ -384,17 +413,15 @@
         "../static/img/bird4.png"
     ];
 
-    // Iteratively define trials
     var trials = [];
     var missed_responses = 0;
-    var total_missed_responses = 0; // Cumulative inactivity count across blocks
-    var prev_block = null;  // Track block changes to reset inactivity counter
+    var total_missed_responses = 0;
+    var prev_block = null;
     var k = 0;
     var bucket = 50;
     var stayed = 0;
 
     for (var j = 0; j < num_birds; j++) {
-        // Bird intro trials
         if (bird_trial) {
             trials.push({
                 type: 'image-keyboard-response',
@@ -414,10 +441,8 @@
         }
 
         for (var i = 0; i < num_trials; i++) {
-            // Handle k cycling so we never go out of bounds
             var idx = k % coins_duration.length;
 
-            // Defensive slices
             var cdur = Array.isArray(coins_duration[idx]) 
                 ? coins_duration[idx].slice() 
                 : coins_duration.slice();
@@ -426,28 +451,14 @@
                 ? coins_distribution[idx].slice() 
                 : coins_distribution.slice();
 
-            // Select stimulus
             var stim_img = stimulus_set_images[k % stimulus_set_images.length];
 
-            // Define trial
-                const trial_te = {
+            const trial_te = {
                 type: 'trial',
-                // Attach experiment metadata to the data object.  In addition to
-                // the block and randomized factors, we include the trial index
-                // and the stimulus image path.  Storing stim_img here allows
-                // the post‑block memory task to recover the image shown on
-                // each trial when reconstructing the 50‑trial block.  Without
-                // this field the memory task would display a broken image
-                // placeholder instead of the original stimulus.
                 data: {
                     block: j + 1,
                     randomized: randomized[j],
                     trial: i + 1,
-                    // Save the stimulus image path so that it becomes part of
-                    // the jsPsych data for this trial.  This is necessary
-                    // because the custom trial plugin does not automatically
-                    // persist stim_img into the data store.  The memory
-                    // plugin later retrieves stim_img from the stored data.
                     stim_img: stim_img
                 },
 
@@ -456,15 +467,7 @@
                 vol_level: (practice_no === 0 ? (factors_vol[j] === 4 ? "low" : "high") : null),
                 stc_level: (practice_no === 0 ? (factors_stc[j] === 16 ? "low" : "high") : null),
 
-                // Pass stim_img as a parameter to the trial plugin so it can
-                // render the image during the game.  This remains unchanged
-                // from the original implementation but is separate from the
-                // data object above.
                 stim_img: stim_img,
-                // Always use the sky background for the canvas backdrop.  The
-                // sky layer is drawn by the plugin via CSS and remains
-                // constant across blocks.  The land image below is varied per
-                // block and practice condition.
                 background_img: sky_background,
                 land_img: (practice_no === 0
                   ? block_land_backgrounds[j % block_land_backgrounds.length]
@@ -483,11 +486,8 @@
                 },
                 on_finish: function(data) {
                     var dat = jsPsych.data.getLastTrialData().values()[0];
-
-                    // Capture current trial coin count immediately
                     var current_coins_caught = dat.coins_caught;
 
-                    // Reset inactivity counter when block changes
                     if (prev_block !== null && dat.block !== prev_block) {
                         missed_responses = 0;
                         prev_coins_caught = null;
@@ -505,8 +505,6 @@
                         stayed = 0;
                         show_missing = true;
 
-                        // Only count inactivity if neither THIS trial nor the PREVIOUS trial
-                        // had a perfect 10 coin catch
                         if (current_coins_caught !== 10 && prev_coins_caught !== 10) {
                           missed_responses++;
                           total_missed_responses++;
@@ -522,13 +520,10 @@
                         }
                     }
 
-                    // Always update previous trial value at the end
                     prev_coins_caught = current_coins_caught;
                 }
-
             };
 
-            // Add trial node
             trials.push({
                 timeline: [trial_te],
                 loop_function: function(data) {
@@ -536,12 +531,12 @@
                 }
             });
 
-            k++; // increment trial index
+            k++;
         }
     }
 
     return trials;
-}; // end make_trials
+  }; // end make_trials
 
   //------------------------------------//
   // Define main and practice trials
@@ -552,27 +547,16 @@
   var practice4 = make_trials(4,randomized);
   var trials = make_trials(0,randomized);
 
-
-  /* Use the fixed trial pairs defined in the memory task plugin
-   * (PREDEFINED_PAIRS). These pairs remain constant across blocks. For
-   * each block the order in which pairs are tested is randomised. After
-   * constructing the standard trial sequence with make_trials(), we
-   * splice the memory trials into the timeline immediately following each
-   * block by slicing the trials array into equal segments and
-   * concatenating the memory timeline.
-   */
-
   // Factory to create a memory timeline for a given block.
   function create_memory_timeline(blockNum) {
     var timeline = [];
     var pairCount = (typeof PREDEFINED_PAIRS !== 'undefined' && Array.isArray(PREDEFINED_PAIRS))
       ? PREDEFINED_PAIRS.length
       : 0;
-    // Introduce the memory task with a brief instruction screen lasting 10 seconds
     timeline.push({
       type: 'html-keyboard-response',
       stimulus: '<p style="font-size:24px; text-align:center;">For each pair of items presented, select the item that you believe was displayed first during the game.<br><br><br>Next, indicate how many items you believe were displayed in between the pair shown.<br><br>You may type a number or use the arrows on the screen or keyboard.<br><br><br>Press the space bar or arrow key to continue.</p>',
-      choices: [32, 37, 38, 39, 40], // space, left, up, right, down
+      choices: [32, 37, 38, 39, 40],
       trial_duration: 15000
     });
     for (var p = 0; p < pairCount; p++) {
@@ -585,25 +569,55 @@
     return timeline;
   }
 
+  // ========================================================================
+  // MOCK DATA INJECTION FOR ISOLATED MEMORY TASK UI TESTING
+  // ========================================================================
+  // WHERE: This function is defined before timeline assembly and called 
+  //        right before the memory timeline is added to the main timeline.
+  //
+  // WHEN:  It executes ONLY when the URL contains '?dev=1&stage=memory' 
+  //        (i.e., DEV_MODE is true and DEV_STAGE === 'memory').
+  //
+  // WHY:   The memory_task.js plugin expects exactly 50 preceding game trials 
+  //        in jsPsych.data. It searches these 50 trials to extract the 
+  //        specific paired images (e.g., trials 2 and 4). If we skip the 
+  //        game phase, jsPsych.data is empty, causing the plugin to crash.
+  //
+  // HOW:   We loop 50 times and use jsPsych.data.get().push() to insert 
+  //        50 synthetic trial records. Crucially, we must include specific 
+  //        metadata so `memory_task.js` accepts the data:
+  //        1. `trial_type: 'trial'` (filtered by plugin)
+  //        2. `block: blockNum` (filtered by plugin)
+  //        3. `true_vol_param: 1` (CRITICAL: the plugin explicitly filters 
+  //           out trials where this is null to ignore practice trials).
+  //        4. `trial: i + 1` (used by the plugin to sort trials 1-50)
+  //        5. `stim_img` (the fallback image to display)
+  // ========================================================================
+  function seedFakeBirdData(blockNum, numTrials) {
+    numTrials = numTrials || 50;
+    
+    // Grab a subset of valid images from your preloaded stimulus_set_images
+    var fakeImgs = stimulus_set_images.slice(0, numTrials); 
+    
+    // 1. Inject block-level parameters
+    // memory_task.js looks for true_vol and true_stc arrays in history
+    jsPsych.data.get().push({
+      true_vol: [1, 2, 3, 4],
+      true_stc: [12, 12, 12, 16]
+    });
 
-  /*
-  (function() {
-    var num_blocks = randomized.length;
-    if (num_blocks > 0) {
-      var block_length = Math.floor(trials.length / num_blocks);
-      var new_trials = [];
-      for (var b = 0; b < num_blocks; b++) {
-        var start_idx = b * block_length;
-        var end_idx = start_idx + block_length;
-        var block_trials = trials.slice(start_idx, end_idx);
-        new_trials = new_trials.concat(block_trials);
-        var mem_tl = create_memory_timeline(b + 1);
-        new_trials = new_trials.concat(mem_tl);
-      }
-      trials = new_trials;
+    // 2. Inject the 50 trial records
+    for (var i = 0; i < numTrials; i++) {
+      jsPsych.data.get().push({
+        trial_type: 'trial',
+        block: blockNum,
+        trial: i + 1,
+        true_vol_param: 1,
+        stim_img: fakeImgs[i]
+      });
     }
-  })();
-  */
+    console.log("[DEV] Seeded " + numTrials + " mock game trials for block " + blockNum + " into jsPsych.data");
+  }
 
   var practice_check_core = {
     type: 'call-function',
@@ -638,15 +652,14 @@
       },
   };
   var practice1 = [];
-  practice1 = practice1.concat(practice1_core); //only if incorrect
-  practice1 = practice1.concat(practice1_loop); //only if incorrect
-  practice1 = practice1.concat(practice1_check); //only if incorrect
-
+  practice1 = practice1.concat(practice1_core);
+  practice1 = practice1.concat(practice1_loop);
+  practice1 = practice1.concat(practice1_check);
 
   //------------------------------------//
   // Define the instruction and practice loops
   //------------------------------------//
-  var low_quality = false; // global variable
+  var low_quality = false;
   var comprehension1_loop_timeline = [inst1_incorrect];
   comprehension1_loop_timeline = comprehension1_loop_timeline.concat(inst1);
   comprehension1_loop_timeline = comprehension1_loop_timeline.concat(practice1);
@@ -730,17 +743,12 @@
   instructions_loop = instructions_loop.concat(inst7);
   instructions_loop = instructions_loop.concat(quiz);
   instructions_loop = instructions_loop.concat(comprehension1);
-  instructions_loop = instructions_loop.concat(comprehension1_loop); //only if incorrect
-  instructions_loop = instructions_loop.concat(comprehension_check); //only if incorrect twice
+  instructions_loop = instructions_loop.concat(comprehension1_loop);
+  instructions_loop = instructions_loop.concat(comprehension_check);
   instructions_loop = instructions_loop.concat(comprehension2);
-  instructions_loop = instructions_loop.concat(comprehension2_loop); //only if incorrect
-  instructions_loop = instructions_loop.concat(comprehension_check); //only if incorrect twice
+  instructions_loop = instructions_loop.concat(comprehension2_loop);
+  instructions_loop = instructions_loop.concat(comprehension_check);
   instructions_loop = instructions_loop.concat(ready);
-
-  // var demographics = {
-  //   type: 'survey-demo',
-  //   data: {survey: 'demographics'}
-  // };
 
   var feedback0 = {
     type: 'instructions',
@@ -750,7 +758,7 @@
     show_clickable_nav: true,
     button_label_previous: "Prev",
     button_label_next: "Next"
-  }
+  };
   var feedback1 = {
     type: 'instructions',
     pages: [
@@ -759,35 +767,7 @@
     show_clickable_nav: true,
     button_label_previous: "Prev",
     button_label_next: "Next"
-  }
-  //THIS has been commented out in original Piray code
-  // var feedback2 = {
-  //   type: 'instructions',
-  //   pages: [
-  //     '<p style="font-size:20px"<br><br>Well Done! You completed the surveys successfully. <br><br> You should now complete a short puzzle quiz. </p>',
-  //   ],
-  //   show_clickable_nav: true,
-  //   button_label_previous: "Prev",
-  //   button_label_next: "Next"
-  // }
-  // var feedback3 = {
-  //   type: 'instructions',
-  //   pages:[
-  //     '<p style="font-size:20px" <br><br> Please now answer a couple of demographic questions. </p>'
-  //   ],
-  //   show_clickable_nav: true,
-  //   button_label_previous: "Prev",
-  //   button_label_next: "Next"
-  // }
-  // var feedback4 = {
-  //   type: 'instructions',
-  //   pages: [
-  //     '<p style="font-size:20px"<br><br> Thank you for your patience and participation. <br><br> We will process a bonus payment for you based on your performance. <br><br> There will be a follow-up session in a month. <br><br> You will be contacted by Prolific with more details. </p>',
-  //   ],
-  //   show_clickable_nav: true,
-  //   button_label_previous: "Prev",
-  //   button_label_next: "Next"
-  // }
+  };
 
   var fullscr = [];
   fullscr.push({
@@ -797,11 +777,9 @@
 
   var finish = {
     type: 'instructions',
-    // pages: [mental_health_resources],
     show_clickable_nav: true,
     button_label_next: "Finish"
   };
-
 
   //------------------------------------//
   // Preload images
@@ -829,8 +807,6 @@
     '../static/img/red-buck1.png',
     '../static/img/red-buck2.png',
     '../static/img/star.png',
-    // Preload the sky and land backgrounds used by the layered backdrop to
-    // reduce flicker when transitioning between contexts.
     '../static/img/block_backgrounds/sky.png',
     '../static/img/block_backgrounds/layer1.png',
     '../static/img/block_backgrounds/layer2.png',
@@ -848,7 +824,7 @@
     show_clickable_nav: true,
     button_label_previous: "Prev",
     button_label_next: "Next"
-  }
+  };
   var feedback_p2 = {
     type: 'instructions',
     pages: [
@@ -857,7 +833,7 @@
     show_clickable_nav: true,
     button_label_previous: "Prev",
     button_label_next: "Next"
-  }
+  };
 
   //------------------------------------//
   // Conditional attention check
@@ -868,268 +844,279 @@
       '<br><br>It seems like there were issues with your responses to the attention check question. <br><br>Please make sure to read and answer carefully.'
     ],
     show_clickable_nav: true,
-    // button_label_previous: "Prev",
     button_label_next: "Continue"
   };
-  // Add a conditional node to show the attention check fail page
   var attentionCheck = {
     timeline: [attentionCheckFailPage],
     conditional_function: function () {
-      // Replace 'your_attention_check_data_variable' and 'expected_response' with actual values
       var attentionCheckData = jsPsych.data.getLastTrialData().values()[0]['infrequency'];
 
       if (attentionCheckData !== 0) {
         failedAttentionChecksCount++;
-
         console.log(attentionCheckData);
-
-        // Show the attention check fail page if the count is less than or equal to 3
         return failedAttentionChecksCount <= 3;
       }
-      return false; // Don't show the attention check fail page if the attention check passes
+      return false;
     }
-  }
+  };
 
   //------------------------------------//
   // Define the experiment
   //------------------------------------//
 
-  // Define global variables.
   var low_quality = false;
-  var failedAttentionChecksCount = 0; // Counter to track the number of failed attention checks
+  var failedAttentionChecksCount = 0;
 
-  // Build the experiment timeline asynchronously to interleave the delay
-  // discounting task between the bird blocks and the memory tasks. The
-  // resulting timeline preserves the original structure but inserts
-  // discounting trials before each block's memory phase.
+  // ====================================================================
+  // CONSOLIDATED TIMELINE ASSEMBLY
+  // ====================================================================
+  var timeline = [];
+
   (async function() {
-    // -------------------------------------------------------------------
-    // DEV FEATURE: Skip the first bird block and jump directly to the
-    // delay discounting + memory tasks for rapid testing.
-    //
-    // To activate this mode, add a `skipblock` query parameter to the
-    // page URL, e.g. `experiment_noinstr.html?skipblock=1`. When present,
-    // the script will:
-    //   1. Seed jsPsych’s data with a dummy set of 50 trial rows so that
-    //      the memory plugin can find `stim_img` and `block` values.
-    //   2. Build a minimal timeline consisting of: welcome screen,
-    //      seeded data (via a call‑function), delay discounting,
-    //      memory task for block 1, feedback, and finish.
-    //   3. Skip construction of the full bird game blocks.
-    //
-    // If the query parameter is absent, the experiment runs as normal.
-    const _urlParams = new URLSearchParams(window.location.search);
-    const _devSkipBlock = _urlParams.has('skipblock');
-    if (_devSkipBlock) {
-      // Determine a condition tag using the first randomised entry.
-      let _cond;
-      try {
-        if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
-          _cond = 'vol' + factors_vol[randomized[0]] + '_stc' + factors_stc[randomized[0]];
-        } else {
-          _cond = randomized[0];
-        }
-      } catch (err) {
-        _cond = randomized[0];
-      }
-      // Set the global background for discounting trials.
-      window.current_land_img = block_land_backgrounds[randomized[0] % block_land_backgrounds.length];
-      // Seed 50 dummy trial rows so the memory task has `stim_img` and `block` data.
-      const _seedBlock = {
-        type: 'call-function',
-        func: function() {
-          const fakeImgs = stimulus_set_images.slice(0, 50);
-          for (let i = 0; i < 50; i++) {
-            jsPsych.data.write({
-              trial_type: 'trial',
-              block: 1,
-              trial: i + 1,
-              stim_img: fakeImgs[i]
-            });
-          }
-        }
-      };
-      // Build delay discounting and memory timelines for block 1.
-      const _discTimeline = await runDelayDiscounting(_cond);
-      const _memTimeline  = create_memory_timeline(1);
-      // Assemble the dev timeline: welcome → seed → discounting → memory → feedback → finish.
-      let _devTL = [];
-      _devTL = _devTL.concat(welcome);
-      _devTL.push(_seedBlock);
-      _devTL = _devTL.concat(_discTimeline);
-      _devTL = _devTL.concat(_memTimeline);
-      _devTL = _devTL.concat(feedback1);
-      _devTL = _devTL.concat(finish);
-      jsPsych.init({
-        timeline: _devTL,
-        show_progress_bar: true,
-        preload_images: preload_images,
-        on_finish: function() {
-          window.removeEventListener("beforeunload", verify_unload);
-          var interaction_data = jsPsych.data.getInteractionData();
-          jsPsych.data.get().addToLast({interactions: interaction_data.json()});
-          if (low_quality) {
-            redirect_reject("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_reject}}");
-          } else {
-            redirect_success("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_success}}");
-            console.log('Saved it!')
-          }
-        }
-      });
-      return; // skip the regular game-building loop
-    }
 
-    // Construct a new trials array with discounting and memory tasks
-    var num_blocks = randomized.length;
-    if (num_blocks > 0) {
-      var block_length = Math.floor(trials.length / num_blocks);
-      var new_trials = [];
-      // The baseline delay‑discounting phase has been removed in MOD12.
-      // Participants will encounter the delay discounting task only after
-      // completing each bird block.
-      for (var b = 0; b < num_blocks; b++) {
-        var start_idx = b * block_length;
-        var end_idx = start_idx + block_length;
-        var block_trials = trials.slice(start_idx, end_idx);
-        new_trials = new_trials.concat(block_trials);
-        // Compute a descriptive condition tag for this block if the
-        // volatility and stochasticity factors are available. Fall
-        // back to the randomised index otherwise.
-        var conditionTag;
-        try {
-          if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
-            conditionTag = 'vol' + factors_vol[randomized[b]] + '_stc' + factors_stc[randomized[b]];
-          } else {
-            conditionTag = randomized[b];
-          }
-        } catch (err) {
-          conditionTag = randomized[b];
-        }
-        // Set the global land background for the upcoming discounting trials to match
-        // the current bird block.  The discounting plugin reads window.current_land_img
-        // to display this background.
-        window.current_land_img = block_land_backgrounds[randomized[b] % block_land_backgrounds.length];
-        // Append the delay discounting timeline for this block
-        var discount_tl = await runDelayDiscounting(conditionTag);
-        new_trials = new_trials.concat(discount_tl);
-        // Append the memory timeline for this block
-        var mem_tl = create_memory_timeline(b + 1);
-        new_trials = new_trials.concat(mem_tl);
-      }
-      trials = new_trials;
-    }
-    // Demographics survey (shown after all 4 blocks complete)
+    // ================================================================
+    // LEGACY DEV: skipblock query parameter — COMMENTED OUT
+    // ================================================================
+    // Previously, adding ?skipblock=1 would:
+    //   1. Seed 50 fake trial rows
+    //   2. Build a minimal timeline: welcome → seed → discounting → memory → feedback → finish
+    //   3. Skip the normal game loop
+    //
+    // const _urlParams = new URLSearchParams(window.location.search);
+    // const _devSkipBlock = _urlParams.has('skipblock');
+    // if (_devSkipBlock) {
+    //   let _cond;
+    //   try {
+    //     if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
+    //       _cond = 'vol' + factors_vol[randomized[0]] + '_stc' + factors_stc[randomized[0]];
+    //     } else {
+    //       _cond = randomized[0];
+    //     }
+    //   } catch (err) {
+    //     _cond = randomized[0];
+    //   }
+    //   window.current_land_img = block_land_backgrounds[randomized[0] % block_land_backgrounds.length];
+    //   const _seedBlock = {
+    //     type: 'call-function',
+    //     func: function() {
+    //       const fakeImgs = stimulus_set_images.slice(0, 50);
+    //       for (let i = 0; i < 50; i++) {
+    //         jsPsych.data.write({
+    //           trial_type: 'trial',
+    //           block: 1,
+    //           trial: i + 1,
+    //           stim_img: fakeImgs[i]
+    //         });
+    //       }
+    //     }
+    //   };
+    //   const _discTimeline = await runDelayDiscounting(_cond);
+    //   const _memTimeline  = create_memory_timeline(1);
+    //   let _devTL = [];
+    //   _devTL = _devTL.concat(welcome);
+    //   _devTL.push(_seedBlock);
+    //   _devTL = _devTL.concat(_discTimeline);
+    //   _devTL = _devTL.concat(_memTimeline);
+    //   _devTL = _devTL.concat(feedback1);
+    //   _devTL = _devTL.concat(finish);
+    //   jsPsych.init({
+    //     timeline: _devTL,
+    //     show_progress_bar: true,
+    //     preload_images: preload_images,
+    //     on_finish: function() {
+    //       window.removeEventListener("beforeunload", verify_unload);
+    //       var interaction_data = jsPsych.data.getInteractionData();
+    //       jsPsych.data.get().addToLast({interactions: interaction_data.json()});
+    //       if (low_quality) {
+    //         redirect_reject("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_reject}}");
+    //       } else {
+    //         redirect_success("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_success}}");
+    //       }
+    //     }
+    //   });
+    //   return;
+    // }
+    // ================================================================
+
+    // Demographics survey
     var survey_demographics = {
       type: 'survey-demo',
       button_label: 'Continue'
     };
 
-    // Assemble the main experiment timeline. This no‑instruction
-    // version omits the comprehension and practice phases.
-    var timeline = [];
-    timeline = timeline.concat(welcome);
-    timeline = timeline.concat(trials);
-    timeline = timeline.concat(survey_demographics);
-    timeline = timeline.concat(feedback1);
-    timeline = timeline.concat(finish);
-    
-    // ===============================
-    // Development skip controls
-    // ===============================
-    const DEV_SKIP_MODE = "none"; 
-    // Options:
-    // "none"         → normal experiment flow
-    // "discounting"  → skip directly to discounting task
-    // "memory"       → skip directly to memory task
-        //memory task doesn't work without running the bird task trials first so this option is currently disabled. To enable, uncomment the relevant sections below and ensure the memory task plugin can run independently of the bird trials by seeding any necessary data.
+    // -----------------------------------------------------------------
+    // Build the bird+memory combined trials array.
+    // Used by stage=bird, stage=full, and normal mode.
+    // -----------------------------------------------------------------
+    function buildBirdMemoryTrials() {
+      var num_blocks = randomized.length;
+      if (num_blocks === 0) return trials;
 
-    if (DEV_SKIP_MODE !== "none") {
+      var block_length = Math.floor(trials.length / num_blocks);
+      var new_trials = [];
 
-      const dev_seed_block = {
-        type: "call-function",
-        func: function() {
-          const fakeImgs = stimulus_set_images.slice(0, 50);
+      for (var b = 0; b < num_blocks; b++) {
+        var start_idx = b * block_length;
+        var end_idx = start_idx + block_length;
+        var block_trials = trials.slice(start_idx, end_idx);
+        new_trials = new_trials.concat(block_trials);
 
-          for (let i = 0; i < 50; i++) {
-            jsPsych.data.write({
-              trial_type: "trial",
-              block: 1,
-              trial: i + 1,
-              stim_img: fakeImgs[i]
-            });
-          }
+        // ============================================================
+        // LEGACY DISCOUNTING INTEGRATION — COMMENTED OUT
+        // ============================================================
+        // var conditionTag;
+        // try {
+        //   if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
+        //     conditionTag = 'vol' + factors_vol[randomized[b]] + '_stc' + factors_stc[randomized[b]];
+        //   } else {
+        //     conditionTag = randomized[b];
+        //   }
+        // } catch (err) {
+        //   conditionTag = randomized[b];
+        // }
+        // window.current_land_img = block_land_backgrounds[randomized[b] % block_land_backgrounds.length];
+        // var discount_tl = await runDelayDiscounting(conditionTag);
+        // new_trials = new_trials.concat(discount_tl);
+        // ============================================================
 
-          console.log("[DEV] Seeded 50 fake trials for block 1");
-        }
-      };
-
-      const dev_message = {
-        type: "html-keyboard-response",
-        stimulus:
-          DEV_SKIP_MODE === "discounting"
-            ? "<p><strong>DEV MODE</strong><br>Skipping directly to discounting task.<br>Press any key.</p>"
-            : "<p><strong>DEV MODE</strong><br>Skipping directly to memory task.<br>Press any key.</p>"
-      };
-
-      timeline = [dev_message, dev_seed_block];
-
-      if (DEV_SKIP_MODE === "discounting") {
-        timeline.push({
-          type: "call-function",
-          func: async function() {
-            const discount_tl = await runDelayDiscounting("DEV");
-            jsPsych.addNodeToEndOfTimeline(
-              { timeline: discount_tl },
-              jsPsych.resumeExperiment
-            );
-          }
-        });
+        // Append the memory timeline for this block
+        var mem_tl = create_memory_timeline(b + 1);
+        new_trials = new_trials.concat(mem_tl);
       }
 
-      if (DEV_SKIP_MODE === "memory") {
-        // When skipping directly to the memory task in development mode,
-        // don't instantiate a single `memory-task` trial by itself.  The
-        // custom memory-task plugin expects to be part of a small
-        // timeline that begins with an instruction screen followed by
-        // multiple memory trials, each parameterised with a pair of
-        // indices.  The `create_memory_timeline()` factory defined
-        // earlier handles this by seeding an instruction page and
-        // iterating over the global `memory_pairs`.  Use that helper to
-        // build the full memory timeline and append it to the current
-        // timeline.  This also ensures the user sees the brief
-        // instructions before the test begins.
-        const memTL = create_memory_timeline(1);
-        timeline = timeline.concat(memTL);
-      }
-    //}
-      //if (DEV_SKIP_MODE === "memory") {
-       // timeline.push({
-       //   type: "memory-task",
-       //   block_num: 1
-      //  });
-    //  }
+      return new_trials;
     }
 
+    // -----------------------------------------------------------------
+    // Stage-based timeline construction
+    // -----------------------------------------------------------------
+    if (DEV_MODE && DEV_STAGE === 'memory') {
+      console.log('[DEV] Stage: memory task only');
+      
+      // Call the mock data generator BEFORE queuing the memory timeline
+      seedFakeBirdData(DEV_BLOCK, 50);
+      
+      // Queue the memory task
+      var memTL = create_memory_timeline(DEV_BLOCK);
+      timeline = timeline.concat(memTL);
+      
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p>Dev Memory Stage Complete. Press any key to end.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+
+    } else if (DEV_MODE && DEV_STAGE === 'bird') {
+      console.log('[DEV] Stage: bird only');
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p><strong>[DEV]</strong> Bird task only. Press any key to start.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+      timeline = timeline.concat(trials);
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Bird stage complete. Press any key to finish.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+
+    } else if (DEV_MODE && DEV_STAGE === 'termination') {
+      console.log('[DEV] Stage: termination');
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV] Termination Screen</strong></p>' +
+          '<p style="font-size:18px;">This is a standalone termination page for development testing.</p>' +
+          '<p style="font-size:18px;">In production, this screen appears when a participant fails ' +
+          'comprehension checks twice.</p>' +
+          '<p style="font-size:16px; color:#d9534f; margin-top:30px;">The game has been terminated ' +
+          'due to incorrect comprehension responses.</p>' +
+          '<p style="font-size:14px; color:#555; margin-top:20px;">Press any key to end.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+
+    } else {
+      if (DEV_MODE) {
+        console.log('[DEV] Stage: full experiment (noinstr)' + (DEV_NTRIALS > 0 ? ' (ntrials=' + DEV_NTRIALS + ')' : ''));
+      }
+
+      var combinedTrials = buildBirdMemoryTrials();
+
+      timeline = timeline.concat(welcome);
+      timeline = timeline.concat(combinedTrials);
+      timeline = timeline.concat(survey_demographics);
+      timeline = timeline.concat(feedback1);
+      timeline = timeline.concat(finish);
+    }
+
+    // ================================================================
+    // LEGACY DEV_SKIP_MODE — COMMENTED OUT
+    // ================================================================
+    // Previously, a const DEV_SKIP_MODE = "none" | "discounting" | "memory"
+    // was used to skip parts of the experiment. This has been replaced by
+    // the URL param system above.
+    //
+    // const DEV_SKIP_MODE = "none";
+    // if (DEV_SKIP_MODE !== "none") {
+    //   const dev_seed_block = {
+    //     type: "call-function",
+    //     func: function() {
+    //       const fakeImgs = stimulus_set_images.slice(0, 50);
+    //       for (let i = 0; i < 50; i++) {
+    //         jsPsych.data.write({
+    //           trial_type: "trial",
+    //           block: 1,
+    //           trial: i + 1,
+    //           stim_img: fakeImgs[i]
+    //         });
+    //       }
+    //       console.log("[DEV] Seeded 50 fake trials for block 1");
+    //     }
+    //   };
+    //   const dev_message = {
+    //     type: "html-keyboard-response",
+    //     stimulus: DEV_SKIP_MODE === "discounting"
+    //       ? "<p><strong>DEV MODE</strong><br>Skipping directly to discounting task.<br>Press any key.</p>"
+    //       : "<p><strong>DEV MODE</strong><br>Skipping directly to memory task.<br>Press any key.</p>"
+    //   };
+    //   timeline = [dev_message, dev_seed_block];
+    //   if (DEV_SKIP_MODE === "discounting") {
+    //     timeline.push({
+    //       type: "call-function",
+    //       func: async function() {
+    //         const discount_tl = await runDelayDiscounting("DEV");
+    //         jsPsych.addNodeToEndOfTimeline(
+    //           { timeline: discount_tl },
+    //           jsPsych.resumeExperiment
+    //         );
+    //       }
+    //     });
+    //   }
+    //   if (DEV_SKIP_MODE === "memory") {
+    //     const memTL = create_memory_timeline(1);
+    //     timeline = timeline.concat(memTL);
+    //   }
+    // }
+    // ================================================================
+
+    // -----------------------------------------------------------------
+    // Initialize jsPsych
+    // -----------------------------------------------------------------
     jsPsych.init({
       timeline: timeline,
       show_progress_bar: true,
-      preload_images: preload_images, // , preload_rpm_images
+      preload_images: preload_images,
       on_finish: function() {
 
-        // Remove requirement to verify redirect
         window.removeEventListener("beforeunload", verify_unload);
 
-        // Add interactions to the data variable
         var interaction_data = jsPsych.data.getInteractionData();
         jsPsych.data.get().addToLast({ interactions: interaction_data.json() });
 
         if (low_quality) {
-          // Save rejected dataset to disk + redirect w/ decoy code (Prolific)
           redirect_reject("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_reject}}");
-          // (Alternative MTurk/error-style: redirect_reject("1011");)
         } else {
-          // Save complete dataset to disk + redirect w/ real completion code
           redirect_success("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_success}}");
+          console.log('Saved it!');
         }
       }
     });

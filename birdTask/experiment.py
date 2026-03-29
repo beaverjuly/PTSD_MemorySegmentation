@@ -7,26 +7,64 @@ bp = Blueprint('experiment', __name__)
 def dev_bootstrap_session_from_query():
     """
     DEV ONLY: allow direct entry to /experiment* without going through "/".
-    Uses PROLIFIC_PID as workerId and populates expected session keys.
+
+    Priority:
+    1. Use explicit workerId / assignmentId / hitId if provided.
+    2. Fall back to Prolific-style params:
+       - PROLIFIC_PID -> workerId
+       - SESSION_ID   -> assignmentId
+       - STUDY_ID     -> hitId
+    3. If dev=1, allow local dummy defaults.
+
+    Frontend developer-mode params (dev, stage, ntrials, block) are handled
+    entirely in the HTML/JS via URLSearchParams and need no Python logic here.
     """
-    if not current_app.config.get("DEBUG_ALLOW_REPEAT", False):
+
+
+    # Do not overwrite an existing session
+    if "workerId" in session:
         return
 
-    if "workerId" not in session:
-        pid = request.args.get("PROLIFIC_PID")
-        if not pid:
-            return  # still missing -> will hit error 1000 as usual
+    is_dev = request.args.get("dev") == "1"
 
-        session["workerId"] = pid
-        session["assignmentId"] = request.args.get("SESSION_ID", "")
-        session["hitId"] = request.args.get("STUDY_ID", "")
+    worker_id = (
+        request.args.get("workerId")
+        or request.args.get("workerID")
+        or request.args.get("PROLIFIC_PID")
+    )
+    assignment_id = (
+        request.args.get("assignmentId")
+        or request.args.get("SESSION_ID")
+        or ""
+    )
+    hit_id = (
+        request.args.get("hitId")
+        or request.args.get("STUDY_ID")
+        or ""
+    )
 
-        # These must exist because your templates and redirect endpoints expect them
-        session.setdefault("code_success", current_app.config.get("CODE_SUCCESS", ""))
-        session.setdefault("code_reject", current_app.config.get("CODE_REJECT", ""))
-        session.setdefault("data", current_app.config.get("DATA_DIR", ""))
-        session.setdefault("metadata", current_app.config.get("META_DIR", ""))
-        session.setdefault("reject", current_app.config.get("REJECT_DIR", ""))
+    # In explicit dev mode, allow safe dummy defaults
+    if is_dev and not worker_id:
+        worker_id = "dev123"
+    if is_dev and not assignment_id:
+        assignment_id = "devA"
+    if is_dev and not hit_id:
+        hit_id = "devH"
+
+    # Still missing a worker id -> let normal error handling occur
+    if not worker_id:
+        return
+
+    session["workerId"] = worker_id
+    session["assignmentId"] = assignment_id
+    session["hitId"] = hit_id
+
+    # These must exist because templates and redirect endpoints expect them
+    session.setdefault("code_success", current_app.config.get("CODE_SUCCESS", ""))
+    session.setdefault("code_reject", current_app.config.get("CODE_REJECT", ""))
+    session.setdefault("data", current_app.config.get("DATA_DIR", ""))
+    session.setdefault("metadata", current_app.config.get("META_DIR", ""))
+    session.setdefault("reject", current_app.config.get("REJECT_DIR", ""))
 
 @bp.route('/experiment')
 def experiment():
@@ -77,18 +115,11 @@ def experiment():
                 code_reject=session['code_reject'],
             )
         )
-        #return render_template(
-         #   'experiment.html', workerId=session['workerId'], assignmentId=session['assignmentId'], hitId=session['hitId'], code_success=session['code_success'], code_reject=session['code_reject'])
 
 
 # -----------------------------------------------------------------------------
 # Additional route: /experiment_noinstr
-#
-# Some experiment deployments provide a version without instructions.  This
-# handler duplicates the logic of the main ``/experiment`` endpoint but
-# renders the ``experiment_noinstr.html`` template instead.  If the user has
-# already completed the experiment or previously visited the experiment
-# endpoint, they will be redirected or flagged as appropriate.
+# -----------------------------------------------------------------------------
 
 @bp.route('/experiment_noinstr')
 def experiment_noinstr():
@@ -113,13 +144,9 @@ def experiment_noinstr():
         return redirect(url_for('error.error', errornum=1004))
 
     # Case 3: first visit.
-    # Update participant metadata to indicate they are starting the experiment.
     session['experiment'] = True
     write_metadata(session, ['experiment'], 'a')
 
-    # Present the no-instructions experiment template.  Pass through
-    # identifiers and completion codes to the page.  The html file must
-    # exist under app/templates.
     return render_template(
         'experiment_noinstr.html',
         workerId=session['workerId'],
@@ -142,11 +169,6 @@ def pass_message():
         session['MESSAGE'] = msg
         write_metadata(session, ['MESSAGE'], 'a')
 
-    ## DEV NOTE:
-    ## This function returns the HTTP response status code: 200
-    ## Code 200 signifies the POST request has succeeded.
-    ## For a full list of status codes, see:
-    ## https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
     return ('', 200)
 
 @bp.route('/redirect_success', methods = ['POST'])
@@ -165,12 +187,6 @@ def redirect_success():
     session['complete'] = 'success'
     write_metadata(session, ['complete','code_success'], 'a')
 
-    ## DEV NOTE:
-    ## This function returns the HTTP response status code: 200
-    ## Code 200 signifies the POST request has succeeded.
-    ## The corresponding jsPsych function handles the redirect.
-    ## For a full list of status codes, see:
-    ## https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
     return ('', 200)
 
 @bp.route('/redirect_reject', methods = ['POST'])
@@ -189,12 +205,6 @@ def redirect_reject():
     session['complete'] = 'reject'
     write_metadata(session, ['complete','code_reject'], 'a')
 
-    ## DEV NOTE:
-    ## This function returns the HTTP response status code: 200
-    ## Code 200 signifies the POST request has succeeded.
-    ## The corresponding jsPsych function handles the redirect.
-    ## For a full list of status codes, see:
-    ## https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
     return ('', 200)
 
 @bp.route('/redirect_error', methods = ['POST'])
@@ -213,34 +223,4 @@ def redirect_error():
     session['complete'] = 'error'
     write_metadata(session, ['complete'], 'a')
 
-    ## DEV NOTE:
-    ## This function returns the HTTP response status code: 200
-    ## Code 200 signifies the POST request has succeeded.
-    ## The corresponding jsPsych function handles the redirect.
-    ## For a full list of status codes, see:
-    ## https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
     return ('', 200)
-
-
-# @bp.route('/incomplete_save', methods=['POST'])
-# def incomplete_save():
-#     """Save incomplete jsPsych dataset to disk."""
-
-#     if request.is_json:
-
-#         ## Retrieve jsPsych data.
-#         JSON = request.get_json()
-
-#         ## Save jsPsch data to disk.
-#         write_data(session, JSON, method='incomplete')
-
-#     ## Flag partial data saving.
-#     session['MESSAGE'] = 'incomplete dataset saved'
-#     write_metadata(session, ['MESSAGE'], 'a')
-
-#     ## DEV NOTE:
-#     ## This function returns the HTTP response status code: 200
-#     ## Code 200 signifies the POST request has succeeded.
-#     ## For a full list of status codes, see:
-#     ## https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-#     return ('', 200)

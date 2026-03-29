@@ -34,8 +34,12 @@
   <script src="../static/task/trial.js" type="text/javascript"></script>
   <!-- Load the memory task plugin. -->
   <script src="../static/task/memory_task.js" type="text/javascript"></script>
-  <!-- Load the delay discounting task -->
-  <script src="../static/task/discounting_task.js" type="text/javascript"></script>
+
+  <!-- ====================================================================
+       DISCOUNTING TASK — COMMENTED OUT (preserved for future restoration)
+       ==================================================================== -->
+  <!-- <script src="../static/task/discounting_task.js" type="text/javascript"></script> -->
+
   <link href="../static/task/game.min.css" rel="stylesheet" type="text/css"></link>
   <script src="../static/task/stimuli.js" type="text/javascript"></script>
   <script src="../static/task/stimuli-details.js" type="text/javascript"></script>
@@ -69,27 +73,42 @@
 <body></body>
 <script>
 
+  // ========================================================================
+  // UNIFIED DEV MODE CONTROLS
+  // ========================================================================
+  // URL query parameters:
+  //   dev=1              — enable developer mode
+  //   stage=<string>     — which stage to run:
+  //       instructions   — instructions/practice only
+  //       bird           — bird-game trials only
+  //       memory         — memory task only (seeds fake data)
+  //       termination    — standalone dev termination screen
+  //       full           — full experiment (default), with optional shortening
+  //   ntrials=<int>      — cap bird trials per block (dev mode only)
+  //   block=<int>        — which block to target (for memory stage; default 1)
+  // ========================================================================
+  var _devParams = new URLSearchParams(window.location.search);
+  var DEV_MODE   = _devParams.get('dev') === '1';
+  var DEV_STAGE  = _devParams.get('stage') || 'full';  // default to full experiment
+  var DEV_NTRIALS = parseInt(_devParams.get('ntrials'), 10) || 0;
+  var DEV_BLOCK   = parseInt(_devParams.get('block'), 10) || 1;
+
+  if (DEV_MODE) {
+    console.log('[DEV] Developer mode ENABLED');
+    console.log('[DEV] stage=' + DEV_STAGE + ', ntrials=' + DEV_NTRIALS + ', block=' + DEV_BLOCK);
+  }
 
   //------------------------------------//
   // Initial verification
   //------------------------------------//
 
   // Display alert message on back/refresh.
-  // https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onbeforeunload
   function verify_unload(e){
     e.preventDefault();
     (e || window.event).returnValue = null;
     return null;
   };
   window.addEventListener("beforeunload", verify_unload);
-
-  // // Add version metadata.
-  // jsPsych.data.addProperties({
-  //   task_version: 'v2.0',
-  //   stimuli_version: stimuli_version,
-  //   factors_vol: factors_vol,
-  //   factors_unp: factors_unp,
-  // });
 
   // say welcome and add exp properties to data.
   var randomized = jsPsych.randomization.shuffle([0,1,2,3]);
@@ -108,9 +127,7 @@
   //------------------------------------//
   // A function for creating main trial sequences
   //------------------------------------//
-  /**
-   * Load the list of stimulus images from the stimulus_set directory. 
-   */
+
   // Practice-only stimulus set (different filenames)
   var practice_stimulus_images = [
     "../static/img/practice_stimulus/apple.jpg",
@@ -321,18 +338,19 @@
     "../static/img/stimulus_set/yarn.jpg",
   ];
 
-  // Shuffle the stimulus set once at the beginning of the experiment.  This
-  // randomisation ensures that each of the four 50‑trial blocks uses a
-  // unique subset of 50 images without replacement.  The memory task
-  // relies on the stim_img stored in each trial's data, so shuffling
-  // here does not interfere with later retrieval.
+  // Shuffle the stimulus set once at the beginning of the experiment.
   stimulus_set_images = jsPsych.randomization.shuffle(stimulus_set_images);
 
-  // Define block and practice backgrounds used for the layered backdrop.  A
-  // fixed sky image is used for every trial; block‑specific land
-  // backgrounds rotate through the four themed terrains; and a separate
-  // practice land image cues participants that they are in a practice
-  // block.  These paths are relative to this HTML file.
+  // In dev mode, optionally restrict stimulus set for faster testing.
+  if (DEV_MODE && DEV_NTRIALS > 0) {
+    var _devSubsetSize = Math.max(DEV_NTRIALS * 4, 50); // enough for all blocks
+    if (stimulus_set_images.length > _devSubsetSize) {
+      stimulus_set_images = stimulus_set_images.slice(0, _devSubsetSize);
+      console.log('[DEV] Restricted stimulus_set_images to ' + _devSubsetSize + ' items');
+    }
+  }
+
+  // Define block and practice backgrounds.
   const sky_background = '../static/img/block_backgrounds/sky.png';
   const block_land_backgrounds = [
     '../static/img/block_backgrounds/layer1.png',
@@ -342,8 +360,7 @@
   ];
   const practice_land_background = '../static/img/block_backgrounds/practice_land_background.png';
 
-  // Expose the sky background globally so that the delay discounting
-  // plugin can access it when composing layered backgrounds.
+  // Expose the sky background globally.
   window.sky_background = sky_background;
 
   var make_trials = function(practice_no, randomized) {
@@ -361,13 +378,8 @@
     var warning_threshold = 16;
     var strong_warning = false;
 
-    // Track the previous trial's coin catch count for quality check logic
     var prev_coins_caught = null;
 
-    // Determine whether the stimulus image should remain hidden for this
-    // set of trials.  Practice blocks 1–4 conceal the item until after
-    // inst7; main blocks (practice_no==0) and the final practice block
-    // (practice_no==5) reveal the stimulus.
     var hideStimulus = false;
     if (practice_no === 1 || practice_no === 2 || practice_no === 3 || practice_no === 4) {
       hideStimulus = true;
@@ -392,10 +404,6 @@
         randomized = [0];
 
     } else if (practice_no == 5) {
-        // Late practice block after inst7 introduces the item component.
-        // Present three trials, hide the bird, and reuse the practice
-        // trajectories.  Leave bag_position and bird_position set to
-        // their practice defaults.
         num_trials = 3;
         show_bird = false;
         randomized = [0];
@@ -409,6 +417,12 @@
         num_trials = 50;
         bag_position = main_bag_position;
         bird_position = main_bird_position;
+
+        // DEV MODE: cap main-block trial count if ntrials is set
+        if (DEV_MODE && DEV_NTRIALS > 0) {
+          num_trials = Math.min(num_trials, DEV_NTRIALS);
+          console.log('[DEV] Capping main block trials to ' + num_trials);
+        }
     }
 
     var stayed_threshold = 4;
@@ -419,17 +433,15 @@
         "../static/img/bird4.png"
     ];
 
-    // Iteratively define trials
     var trials = [];
     var missed_responses = 0;
-    var total_missed_responses = 0; // Cumulative inactivity count across blocks
-    var prev_block = null;  // Track block changes to reset inactivity counter
+    var total_missed_responses = 0;
+    var prev_block = null;
     var k = 0;
     var bucket = 50;
     var stayed = 0;
 
     for (var j = 0; j < num_birds; j++) {
-        // Bird intro trials
         if (bird_trial) {
             trials.push({
                 type: 'image-keyboard-response',
@@ -449,10 +461,8 @@
         }
 
         for (var i = 0; i < num_trials; i++) {
-            // Handle k cycling so we never go out of bounds
             var idx = k % coins_duration.length;
 
-            // Defensive slices
             var cdur = Array.isArray(coins_duration[idx]) 
                 ? coins_duration[idx].slice() 
                 : coins_duration.slice();
@@ -461,10 +471,6 @@
                 ? coins_distribution[idx].slice() 
                 : coins_distribution.slice();
 
-            // Select stimulus.  For any practice block (1-5), use the practice
-            // stimulus images; for main trials (practice_no === 0), use the main
-            // stimulus set.  The modulo ensures that we wrap around if there
-            // are fewer images than trials.
             var stim_img;
             if (practice_no >= 1 && practice_no <= 5) {
                 stim_img = practice_stimulus_images[k % practice_stimulus_images.length];
@@ -472,26 +478,12 @@
                 stim_img = stimulus_set_images[k % stimulus_set_images.length];
             }
   
-        
-            // Define trial
-                const trial_te = {
+            const trial_te = {
                 type: 'trial',
-                // Attach experiment metadata to the data object.  In addition to
-                // the block and randomized factors, we include the trial index
-                // and the stimulus image path.  Storing stim_img here allows
-                // the post‑block memory task to recover the image shown on
-                // each trial when reconstructing the 50‑trial block.  Without
-                // this field the memory task would display a broken image
-                // placeholder instead of the original stimulus.
                 data: {
                     block: j + 1,
                     randomized: randomized[j],
                     trial: i + 1,
-                    // Save the stimulus image path so that it becomes part of
-                    // the jsPsych data for this trial.  This is necessary
-                    // because the custom trial plugin does not automatically
-                    // persist stim_img into the data store.  The memory
-                    // plugin later retrieves stim_img from the stored data.
                     stim_img: stim_img
                 },
 
@@ -500,18 +492,8 @@
                 vol_level: (practice_no === 0 ? (factors_vol[j] === 4 ? "low" : "high") : null),
                 stc_level: (practice_no === 0 ? (factors_stc[j] === 16 ? "low" : "high") : null),
                 
-                // Pass stim_img as a parameter to the trial plugin so it can
-                // render the image during the game.  This remains unchanged
-                // from the original implementation but is separate from the
-                // data object above.
                 stim_img: stim_img,
-                // Always draw the sky image behind the game canvas.  The
-                // plugin uses this parameter to derive the backdrop but no
-                // longer centres the block‑specific land here.  The land
-                // image for this trial is passed separately via the
-                // land_img property.
                 background_img: sky_background,
-                // Assign the land background image for this block (or practice)
                 land_img: (practice_no === 0
                   ? block_land_backgrounds[j % block_land_backgrounds.length]
                   : practice_land_background),
@@ -522,9 +504,6 @@
                 show_bird: show_bird,
                 is_moving_practice: is_moving_practice,
                 missing_msg_warning_number: warning_threshold,
-                // Pass through the hideStimus flag so that the trial
-                // plugin can decide whether to show the item.  See trial.js
-                // for details.
                 hide_stimulus: hideStimulus,
                 on_start: function(trial) {
                     trial.bucket_position = bucket;
@@ -533,11 +512,8 @@
                 },
                 on_finish: function(data) {
                     var dat = jsPsych.data.getLastTrialData().values()[0];
-
-                    // Capture current trial coin count immediately
                     var current_coins_caught = dat.coins_caught;
 
-                    // Reset inactivity counter when block changes
                     if (prev_block !== null && dat.block !== prev_block) {
                         missed_responses = 0;
                         prev_coins_caught = null;
@@ -555,8 +531,6 @@
                         stayed = 0;
                         show_missing = true;
 
-                        // Only count inactivity if neither THIS trial nor the PREVIOUS trial
-                        // had a perfect 10 coin catch
                         if (current_coins_caught !== 10 && prev_coins_caught !== 10) {
                           missed_responses++;
                           total_missed_responses++;
@@ -572,13 +546,10 @@
                         }
                     }
 
-                    // Always update previous trial value at the end
                     prev_coins_caught = current_coins_caught;
                 }
-
             };
 
-            // Add trial node
             trials.push({
                 timeline: [trial_te],
                 loop_function: function(data) {
@@ -586,12 +557,12 @@
                 }
             });
 
-            k++; // increment trial index
+            k++;
         }
     }
 
     return trials;
-}; // end make_trials
+  }; // end make_trials
 
 
   //------------------------------------//
@@ -601,34 +572,20 @@
   var practice2 = make_trials(2,randomized);
   var practice3 = make_trials(3,randomized);
   var practice4 = make_trials(4,randomized);
-  // Late practice block introducing the item component after inst7
   var practice5 = make_trials(5,randomized);
   var trials = make_trials(0,randomized);
 
 
-  /* The trial pairs are defined
-   * in the memory task plugin (PREDEFINED_PAIRS) and remain fixed across
-   * blocks. For each block the order in which pairs are tested is
-   * re‑randomised. After building the standard trial sequence with
-   * make_trials(), we splice the memory trials into the timeline after
-   * each block by slicing the trials array into equal segments and
-   * concatenating the corresponding memory timeline.
-   */
-
-  // Factory function to build a memory timeline for a given block. The
-  // returned array contains 25 memory-task trials, each with a pair of
-  // indices, a pair index (1–25), and the block number. The order of
-  // pairs in the timeline is randomised independently for each block.
+  // Factory function to build a memory timeline for a given block.
   function create_memory_timeline(blockNum) {
     var timeline = [];
     var pairCount = (typeof PREDEFINED_PAIRS !== 'undefined' && Array.isArray(PREDEFINED_PAIRS))
       ? PREDEFINED_PAIRS.length
       : 0;
-    // Introduce the memory task with a brief instruction screen lasting 10 seconds
     timeline.push({
       type: 'html-keyboard-response',
       stimulus: '<p style="font-size:24px; text-align:center;">For each pair of items presented, select the item that you believe was displayed first during the game.<br><br><br>Next, indicate how many items you believe were shown in between the pair shown by pressing any number 0-9 on your keyboard. <br><br><br>Press the space bar or arrow key to continue.</p>',
-      choices: [32, 37, 38, 39, 40], // space, left, up, right, down
+      choices: [32, 37, 38, 39, 40],
       trial_duration: 15000
     });
     for (var p = 0; p < pairCount; p++) {
@@ -639,6 +596,24 @@
       });
     }
     return timeline;
+  }
+
+  // Helper: seed fake bird-trial data for a given block so the memory
+  // plugin can run independently of the bird task.
+  function seedFakeBirdData(blockNum, numTrials) {
+    numTrials = numTrials || 50;
+    var fakeImgs = stimulus_set_images.slice(0, numTrials);
+    for (var i = 0; i < numTrials; i++) {
+      jsPsych.data.write({
+        trial_type: 'trial',
+        block: blockNum,
+        trial: i + 1,
+        stim_img: fakeImgs[i],
+        true_vol_param: factors_vol[0],
+        true_stc_param: factors_stc[0]
+      });
+    }
+    console.log('[DEV] Seeded ' + numTrials + ' fake trials for block ' + blockNum);
   }
 
   var practice_check_core = {
@@ -674,15 +649,15 @@
       },
   };
   var practice1 = [];
-  practice1 = practice1.concat(practice1_core); //only if incorrect
-  practice1 = practice1.concat(practice1_loop); //only if incorrect
-  practice1 = practice1.concat(practice1_check); //only if incorrect
+  practice1 = practice1.concat(practice1_core);
+  practice1 = practice1.concat(practice1_loop);
+  practice1 = practice1.concat(practice1_check);
 
 
   //------------------------------------//
   // Define the instruction and practice loops
   //------------------------------------//
-  var low_quality = false; // global variable
+  var low_quality = false;
   var comprehension1_loop_timeline = [inst_summary];
   comprehension1_loop_timeline = comprehension1_loop_timeline.concat(comprehension1);
   var comprehension1_loop = {
@@ -743,23 +718,15 @@
   instructions_loop = instructions_loop.concat(addSmoothTransitions(inst3));
   instructions_loop = instructions_loop.concat(practice3);
   instructions_loop = instructions_loop.concat(addSmoothTransitions(inst4));
-  // After introducing the items in inst7, run a short practice block
-  // that displays the stimuli so participants can familiarise
-  // themselves with the item component.
   instructions_loop = instructions_loop.concat(practice5);
   instructions_loop = instructions_loop.concat(addSmoothTransitions(inst5));
   instructions_loop = instructions_loop.concat(addSmoothTransitions(inst6));
   instructions_loop = instructions_loop.concat(addSmoothTransitions(inst7));
   instructions_loop = instructions_loop.concat(addSmoothTransitions(quiz));
   instructions_loop = instructions_loop.concat(comprehension1);
-  instructions_loop = instructions_loop.concat(comprehension1_loop); //only if incorrect
-  instructions_loop = instructions_loop.concat(comprehension_check); //only if incorrect twice
+  instructions_loop = instructions_loop.concat(comprehension1_loop);
+  instructions_loop = instructions_loop.concat(comprehension_check);
   instructions_loop = instructions_loop.concat(ready);
-
-  // var demographics = {
-  //   type: 'survey-demo',
-  //   data: {survey: 'demographics'}
-  // };
 
   var feedback0 = {
     type: 'instructions',
@@ -779,34 +746,6 @@
     button_label_previous: "Prev",
     button_label_next: "Next"
   }
-  //THIS has been commented out in original Piray code
-  // var feedback2 = {
-  //   type: 'instructions',
-  //   pages: [
-  //     '<p style="font-size:20px"<br><br>Well Done! You completed the surveys successfully. <br><br> You should now complete a short puzzle quiz. </p>',
-  //   ],
-  //   show_clickable_nav: true,
-  //   button_label_previous: "Prev",
-  //   button_label_next: "Next"
-  // }
-  // var feedback3 = {
-  //   type: 'instructions',
-  //   pages:[
-  //     '<p style="font-size:20px" <br><br> Please now answer a couple of demographic questions. </p>'
-  //   ],
-  //   show_clickable_nav: true,
-  //   button_label_previous: "Prev",
-  //   button_label_next: "Next"
-  // }
-  // var feedback4 = {
-  //   type: 'instructions',
-  //   pages: [
-  //     '<p style="font-size:20px"<br><br> Thank you for your patience and participation. <br><br> We will process a bonus payment for you based on your performance. <br><br> There will be a follow-up session in a month. <br><br> You will be contacted by Prolific with more details. </p>',
-  //   ],
-  //   show_clickable_nav: true,
-  //   button_label_previous: "Prev",
-  //   button_label_next: "Next"
-  // }
 
   var fullscr = [];
   fullscr.push({
@@ -816,7 +755,6 @@
 
   var finish = {
     type: 'instructions',
-    // pages: [mental_health_resources],
     show_clickable_nav: true,
     button_label_next: "Finish"
   };
@@ -847,8 +785,6 @@
     '../static/img/red-buck1.png',
     '../static/img/red-buck2.png',
     '../static/img/star.png',
-    // Preload the sky and land backgrounds used by the layered backdrop to
-    // reduce flicker when transitioning between contexts.
     '../static/img/block_backgrounds/sky.png',
     '../static/img/block_backgrounds/layer1.png',
     '../static/img/block_backgrounds/layer2.png',
@@ -857,9 +793,7 @@
     '../static/img/block_backgrounds/practice_land_background.png',
   ];
 
-  // Warm browser image decode cache. jsPsych preloading fetches assets,
-  // but some browsers still defer decode until first render, which can
-  // cause a brief flicker between instruction pages.
+  // Warm browser image decode cache.
   async function warmImageCache(imagePaths) {
     const uniquePaths = Array.from(new Set(imagePaths || []));
     await Promise.all(uniquePaths.map((src) => {
@@ -878,9 +812,7 @@
     }));
   }
 
-  // Keep frequently reused instruction images mounted offscreen so the
-  // browser does not repeatedly evict/re-rasterize them between pages.
-  // This targets the brief practice-page flicker seen on some clients.
+  // Keep frequently reused instruction images mounted offscreen.
   function pinImagesOffscreen(imagePaths) {
     const uniquePaths = Array.from(new Set(imagePaths || []));
     const holder = document.createElement('div');
@@ -900,8 +832,6 @@
       img.src = src;
       img.loading = 'eager';
       img.decoding = 'sync';
-      // Tiny rendered size is enough to keep it in the render pipeline
-      // without affecting layout.
       img.width = 2;
       img.height = 2;
       holder.appendChild(img);
@@ -911,9 +841,7 @@
     window.__imgPinCache = holder;
   }
 
-  // Rewrite instruction image paths to in-memory blob URLs. This avoids
-  // revalidation/network jitter for JPGs that appear across many
-  // instruction pages and can remove residual flicker on some clients.
+  // Rewrite instruction image paths to in-memory blob URLs.
   async function localizeInstructionImageSources(imagePaths) {
     const uniquePaths = Array.from(new Set(imagePaths || []));
     const urlMap = {};
@@ -924,7 +852,6 @@
         const blob = await res.blob();
         urlMap[src] = URL.createObjectURL(blob);
       } catch (e) {
-        // Keep original path on failure.
         urlMap[src] = src;
       }
     }));
@@ -946,7 +873,6 @@
       });
     });
 
-    // Keep refs available so they can be revoked later if needed.
     window.__instructionBlobUrls = Object.values(urlMap).filter((u) => u && u.startsWith('blob:'));
   }
 
@@ -1028,25 +954,19 @@
       '<br><br>It seems like there were issues with your responses to the attention check question. <br><br>Please make sure to read and answer carefully.'
     ],
     show_clickable_nav: true,
-    // button_label_previous: "Prev",
     button_label_next: "Continue"
   };
-  // Add a conditional node to show the attention check fail page
   var attentionCheck = {
     timeline: [attentionCheckFailPage],
     conditional_function: function () {
-      // Replace 'your_attention_check_data_variable' and 'expected_response' with actual values
       var attentionCheckData = jsPsych.data.getLastTrialData().values()[0]['infrequency'];
 
       if (attentionCheckData !== 0) {
         failedAttentionChecksCount++;
-
         console.log(attentionCheckData);
-
-        // Show the attention check fail page if the count is less than or equal to 3
         return failedAttentionChecksCount <= 3;
       }
-      return false; // Don't show the attention check fail page if the attention check passes
+      return false;
     }
   }
 
@@ -1054,122 +974,188 @@
   // Define the experiment
   //------------------------------------//
 
-  // Define global variables.
   var low_quality = false;
-  var failedAttentionChecksCount = 0; // Counter to track the number of failed attention checks
+  var failedAttentionChecksCount = 0;
 
-  // Define timeline.
-  var timeline = [];
-
-  timeline = timeline.concat(welcome);
-  
-  timeline = timeline.concat(feedback0);
-  // Build the full experiment timeline asynchronously. We slice the
-  // trials array into equal blocks, interleave a delay discounting
-  // sequence after each block, then append the memory test for that
-  // block. Once the combined trials array is constructed, we
-  // assemble the overall timeline and initialise jsPsych. This
-  // ensures that the discounting task runs immediately after each
-  // bird block and before the memory task, without altering the
-  // existing instruction and practice logic.
+  // ====================================================================
+  // CONSOLIDATED TIMELINE ASSEMBLY
+  // ====================================================================
+  // This single async block builds the timeline based on DEV_STAGE.
+  // The discounting task integration is commented out but preserved.
+  // ====================================================================
   (async function() {
-    // Compute the number of experimental blocks (baseline + 4
-    // volatility/stochasticity conditions). This should match the
-    // length of the randomized array defined earlier.
-    var num_blocks = randomized.length;
-    if (num_blocks > 0) {
-      var block_length = Math.floor(trials.length / num_blocks);
-      var new_trials = [];
-      // The baseline delay‑discounting phase has been removed in MOD12.
-      // Participants will encounter the delay discounting task only after
-      // completing each bird block.
-      for (var b = 0; b < num_blocks; b++) {
-        var start_idx = b * block_length;
-        var end_idx = start_idx + block_length;
-        var block_trials = trials.slice(start_idx, end_idx);
-        // Append the original bird trials for this block
-        new_trials = new_trials.concat(block_trials);
-        // Derive a descriptive condition tag using the true volatility
-        // and stochasticity factors if available. This tag is
-        // recorded with each discounting trial for analysis.
-        var conditionTag;
-        try {
-          if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
-            conditionTag = 'vol' + factors_vol[randomized[b]] + '_stc' + factors_stc[randomized[b]];
-          } else {
-            conditionTag = randomized[b];
-          }
-        } catch (err) {
-          conditionTag = randomized[b];
-        }
-        // Append the delay discounting timeline for this block. Await
-        // the Promise returned by runDelayDiscounting so that the
-        // discounting trials are fully defined before continuing.
-        // Set the global land background for the upcoming discounting trials to match
-        // the current bird block.  The discounting plugin reads window.current_land_img
-        // to display this background.
-        window.current_land_img = block_land_backgrounds[randomized[b] % block_land_backgrounds.length];
-        var discount_tl = await runDelayDiscounting(conditionTag);
-        new_trials = new_trials.concat(discount_tl);
-        // Append the memory test timeline for this block. The memory
-        // pairs are shuffled anew for each block within
-        // create_memory_timeline().
-        var mem_tl = create_memory_timeline(b + 1);
-        new_trials = new_trials.concat(mem_tl);
-      }
-      trials = new_trials;
-    }
-    // Assemble the main experiment timeline. We preserve the order
-    // established in the original implementation: welcome page,
-    // feedback0, instruction/practice sequences, the combined trials,
-    // final feedback, and finish. Note that feedback0 and
-    // Demographics survey (shown after all 4 blocks complete)
+
+    // Demographics survey (shared across stages that need it)
     var survey_demographics = {
       type: 'survey-demo',
       button_label: 'Continue'
     };
 
-    // instructions_loop are defined earlier in the script.
+    // -----------------------------------------------------------------
+    // Build the bird+memory combined trials array.
+    // This is used by stage=bird, stage=full, and normal mode.
+    // -----------------------------------------------------------------
+    function buildBirdMemoryTrials() {
+      var num_blocks = randomized.length;
+      if (num_blocks === 0) return trials;
+
+      var block_length = Math.floor(trials.length / num_blocks);
+      var new_trials = [];
+
+      for (var b = 0; b < num_blocks; b++) {
+        var start_idx = b * block_length;
+        var end_idx = start_idx + block_length;
+        var block_trials = trials.slice(start_idx, end_idx);
+        new_trials = new_trials.concat(block_trials);
+
+        // ============================================================
+        // DISCOUNTING TASK — COMMENTED OUT (preserved for restoration)
+        // ============================================================
+        // var conditionTag;
+        // try {
+        //   if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
+        //     conditionTag = 'vol' + factors_vol[randomized[b]] + '_stc' + factors_stc[randomized[b]];
+        //   } else {
+        //     conditionTag = randomized[b];
+        //   }
+        // } catch (err) {
+        //   conditionTag = randomized[b];
+        // }
+        // window.current_land_img = block_land_backgrounds[randomized[b] % block_land_backgrounds.length];
+        // var discount_tl = await runDelayDiscounting(conditionTag);
+        // new_trials = new_trials.concat(discount_tl);
+        // ============================================================
+
+        // Append the memory test timeline for this block
+        var mem_tl = create_memory_timeline(b + 1);
+        new_trials = new_trials.concat(mem_tl);
+      }
+
+      return new_trials;
+    }
+
+    // -----------------------------------------------------------------
+    // Stage-based timeline construction
+    // -----------------------------------------------------------------
     var timeline = [];
-    timeline = timeline.concat(welcome);
-    timeline = timeline.concat(feedback0);
-    timeline = timeline.concat(instructions_loop);
-    timeline = timeline.concat(trials);
-    timeline = timeline.concat(survey_demographics);
-    timeline = timeline.concat(feedback1);
-    timeline = timeline.concat(finish);
-    // Initialise jsPsych with the constructed timeline. Use the same
-    // settings for the progress bar and preloading as in the MOD9
-    // version. The on_finish handler also mirrors the original
-    // functionality, saving the data and redirecting participants
-    // based on data quality.
-    // Ensure instruction/game images are decoded before timeline starts.
-    await warmImageCache(preload_images);
 
-    // Specifically pin instruction/practice JPG assets that are shown in
-    // rapid succession where participants reported visible flicker.
-    var instructionJpgs = [
-      '../static/img/imga1.jpg',
-      '../static/img/imga2.jpg',
-      '../static/img/imgb1.jpg',
-      '../static/img/imgb2.jpg',
-      '../static/img/imgb3.jpg',
-      '../static/img/imgc1.jpg',
-      '../static/img/imgc2.jpg',
-      '../static/img/imgc3.jpg',
-      '../static/img/imgd1.jpg',
-      '../static/img/imgd2.jpg',
-      '../static/img/imgd3.jpg',
-      '../static/img/imge1.jpg'
-    ];
+    if (DEV_MODE && DEV_STAGE === 'instructions') {
+      // INSTRUCTIONS ONLY: welcome + feedback0 + instructions_loop, then finish
+      console.log('[DEV] Stage: instructions only');
+      timeline = timeline.concat(welcome);
+      timeline = timeline.concat(feedback0);
+      timeline = timeline.concat(instructions_loop);
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Instructions stage complete. Press any key to finish.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
 
-    pinImagesOffscreen(instructionJpgs);
-    await localizeInstructionImageSources(instructionJpgs);
+    } else if (DEV_MODE && DEV_STAGE === 'bird') {
+      // BIRD ONLY: just the bird-game trials (already shortened by make_trials if ntrials set)
+      console.log('[DEV] Stage: bird only');
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p><strong>[DEV]</strong> Bird task only. Press any key to start.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+      // Use raw trials without memory interleaving
+      timeline = timeline.concat(trials);
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Bird stage complete. Press any key to finish.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
 
+    } else if (DEV_MODE && DEV_STAGE === 'memory') {
+      // MEMORY ONLY: seed fake data, then run memory timeline
+      console.log('[DEV] Stage: memory only, block=' + DEV_BLOCK);
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p><strong>[DEV]</strong> Memory task only (block ' + DEV_BLOCK + '). Press any key to start.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+      // Seed fake bird-trial data so memory plugin can find stim_img and block values
+      timeline.push({
+        type: 'call-function',
+        func: function() {
+          seedFakeBirdData(DEV_BLOCK, 50);
+        }
+      });
+      var memTL = create_memory_timeline(DEV_BLOCK);
+      timeline = timeline.concat(memTL);
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Memory stage complete. Press any key to finish.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+
+    } else if (DEV_MODE && DEV_STAGE === 'termination') {
+      // TERMINATION: standalone dev termination screen
+      console.log('[DEV] Stage: termination');
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV] Termination Screen</strong></p>' +
+          '<p style="font-size:18px;">This is a standalone termination page for development testing.</p>' +
+          '<p style="font-size:18px;">In production, this screen appears when a participant fails ' +
+          'comprehension checks twice.</p>' +
+          '<p style="font-size:16px; color:#d9534f; margin-top:30px;">The game has been terminated ' +
+          'due to incorrect comprehension responses.</p>' +
+          '<p style="font-size:14px; color:#555; margin-top:20px;">Press any key to end.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+
+    } else {
+      // FULL EXPERIMENT (stage=full or normal non-dev mode)
+      // This is the production path.
+      if (DEV_MODE) {
+        console.log('[DEV] Stage: full experiment' + (DEV_NTRIALS > 0 ? ' (ntrials=' + DEV_NTRIALS + ')' : ''));
+      }
+
+      // Build the combined bird+memory trials (discounting commented out inside)
+      var combinedTrials = buildBirdMemoryTrials();
+
+      timeline = timeline.concat(welcome);
+      timeline = timeline.concat(feedback0);
+      timeline = timeline.concat(instructions_loop);
+      timeline = timeline.concat(combinedTrials);
+      timeline = timeline.concat(survey_demographics);
+      timeline = timeline.concat(feedback1);
+      timeline = timeline.concat(finish);
+    }
+
+    // -----------------------------------------------------------------
+    // Image warming (skip for lightweight dev stages)
+    // -----------------------------------------------------------------
+    if (!DEV_MODE || DEV_STAGE === 'full' || DEV_STAGE === 'instructions') {
+      await warmImageCache(preload_images);
+
+      var instructionJpgs = [
+        '../static/img/imga1.jpg',
+        '../static/img/imga2.jpg',
+        '../static/img/imgb1.jpg',
+        '../static/img/imgb2.jpg',
+        '../static/img/imgb3.jpg',
+        '../static/img/imgc1.jpg',
+        '../static/img/imgc2.jpg',
+        '../static/img/imgc3.jpg',
+        '../static/img/imgd1.jpg',
+        '../static/img/imgd2.jpg',
+        '../static/img/imgd3.jpg',
+        '../static/img/imge1.jpg'
+      ];
+
+      pinImagesOffscreen(instructionJpgs);
+      await localizeInstructionImageSources(instructionJpgs);
+    }
+
+    // -----------------------------------------------------------------
+    // Initialize jsPsych
+    // -----------------------------------------------------------------
     jsPsych.init({
       timeline: timeline,
       show_progress_bar: true,
-      preload_images: preload_images, // , preload_rpm_images
+      preload_images: preload_images,
       on_finish: function() {
 
         // Remove requirement to verify redirect
@@ -1180,11 +1166,8 @@
         jsPsych.data.get().addToLast({ interactions: interaction_data.json() });
 
         if (low_quality) {
-          // Save rejected dataset to disk + redirect w/ decoy code (Prolific)
           redirect_reject("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_reject}}");
-          // (Alternative MTurk/error-style: redirect_reject("1011");)
         } else {
-          // Save complete dataset to disk + redirect w/ real completion code
           redirect_success("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_success}}");
         }
       }

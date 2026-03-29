@@ -1,6 +1,6 @@
 import os, sys, configparser, warnings
 from flask import (Flask, redirect, render_template, request, session, url_for)
-from app import consent, alert, experiment, complete, error
+from . import consent, alert, experiment, complete, error
 from .io import write_metadata
 from .utils import gen_code
 __version__ = '1.1'
