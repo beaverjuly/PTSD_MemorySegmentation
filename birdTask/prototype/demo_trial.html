@@ -293,24 +293,17 @@
     100% { top: 72%; opacity: 0; }
   }
 
-  @keyframes objDrop {
-    from { top: 72%; }
-    to   { top: 105%; }
+  @keyframes objDropSpread {
+    0%   { top: 72%; transform: translateX(0) scale(0.8); }
+    15%  { top: 68%; transform: translateX(calc(var(--spread-x) * 0.2)) scale(1.1); } /* slight upward pop */
+    100% { top: 105%; transform: translateX(var(--spread-x)) scale(1); }
   }
 
-  @keyframes objDropLeft {
-    from { top: 72%; transform: translateX(0); }
-    to   { top: 105%; transform: translateX(-15px); }
-  }
-
-  @keyframes objDropRight {
-    from { top: 72%; transform: translateX(0); }
-    to   { top: 105%; transform: translateX(15px); }
-  }
-
-  @keyframes explodeAnim {
-    from { opacity: 0.2; }
-    to   { opacity: 0; }
+  /* FIXED: Renamed explodeAnim to lightBurst and added scale effect for realism */
+  @keyframes lightBurst {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
+    50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
   }
 </style>
 </head>
@@ -457,11 +450,12 @@
     bag.style.transform = 'translateX(-50%)';
 
     const expl = document.getElementById('expl');
+    expl.className = 'asset expl-el';
     expl.style.animation = 'none';
     expl.style.opacity = '0';
     expl.style.top = IMPACT_TOP;
     expl.style.left = '50%';
-    expl.style.transform = 'translate(-50%, -50%)';
+    expl.style.transform = 'translate(-50%, -50%) scale(0.4)';
 
     for (let i = 0; i < COINS; i++) {
       const obj = document.getElementById('g' + i);
@@ -508,7 +502,7 @@
       void bag.offsetWidth;
       bag.style.left = bagPos + '%';
       bag.style.opacity = '1';
-      bag.style.top = '12%';
+      bag.style.top = BAG_START_TOP;
       bag.style.animation = 'bagdrop 1000ms ease-in forwards';
 
       addTimeout(() => {
@@ -516,12 +510,12 @@
         bag.style.animation = 'none';
 
         const expl = document.getElementById('expl');
+        expl.className = 'asset expl-el' + (mode === 'loss' ? ' loss' : '');
         expl.style.animation = 'none';
         void expl.offsetWidth;
         expl.style.left = bagPos + '%';
         expl.style.top = IMPACT_TOP;
-        expl.style.opacity = '0.2';
-        expl.style.animation = 'explodeAnim 300ms linear forwards';
+        expl.style.animation = 'lightBurst 260ms ease-out forwards';
 
         const captureIndices = [];
 
@@ -537,14 +531,11 @@
 
           obj.style.visibility = 'visible';
 
-          const half = (COINS - 1) / 2;
-          if (i < half) {
-            obj.style.animation = `objDropLeft ${COIN_DUR[i]}ms cubic-bezier(.7,.3,1,1) forwards`;
-          } else if (i > half) {
-            obj.style.animation = `objDropRight ${COIN_DUR[i]}ms cubic-bezier(.7,.3,1,1) forwards`;
-          } else {
-            obj.style.animation = `objDrop ${COIN_DUR[i]}ms cubic-bezier(.7,.3,1,1) forwards`;
-          }
+          // Dynamically set the X spread based on your existing COIN_DIST array
+          obj.style.setProperty('--spread-x', (COIN_DIST[i] * 0.5) + 'vw');
+          
+          // Apply the single dynamic animation
+          obj.style.animation = `objDropSpread ${COIN_DUR[i]}ms cubic-bezier(0.4, 0, 1, 1) forwards`;
 
           const capFrac = 19 / 30;
 
@@ -637,3 +628,4 @@
 </script>
 </body>
 </html>
+
