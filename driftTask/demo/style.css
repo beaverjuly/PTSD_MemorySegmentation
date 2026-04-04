@@ -1,0 +1,77 @@
+/* ============================================================
+   demo/style.css – Demo browser interface styling
+   ============================================================ */
+
+#demo-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+#demo-wrapper h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.demo-subtitle {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 0.92rem;
+}
+
+/* ---- Control panel ---- */
+.control-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.control-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+}
+
+.btn-group {
+  display: flex;
+  gap: 4px;
+}
+.btn-group button {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  background: #f7f7f7;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.btn-group button:hover { background: #e2e6ea; }
+.btn-group button.active {
+  background: #2a6496;
+  color: #fff;
+  border-color: #2a6496;
+}
+
+/* ---- Preview frame ---- */
+#preview-frame {
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background: #f2f2f0;
+  min-height: 480px;
+  padding: 10px;
+}
+#preview-frame #task-container {
+  min-height: 460px;
+}

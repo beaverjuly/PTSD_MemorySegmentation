@@ -1,0 +1,52 @@
+{
+  "noBoundary": {
+    "numTrials": 36,
+    "numStates": 1,
+    "trialsPerState": 36,
+    "latentMeans": [50],
+    "changePoints": [],
+    "fluctuationRange": 5,
+    "description": "Single stable latent mean, reward fluctuates ±5 around it."
+  },
+  "boundary": {
+    "numTrials": 36,
+    "numStates": 4,
+    "trialsPerState": 9,
+    "latentMeans": [30, 70, 20, 80],
+    "changePoints": [9, 18, 27],
+    "fluctuationRange": 5,
+    "description": "4 latent states with 9 trials each. Abrupt mean shifts at trials 9, 18, 27."
+  },
+  "testSampling": {
+    "singleItemNoBoundary": {
+      "count": 10,
+      "rule": "evenly spaced across 36 positions"
+    },
+    "singleItemBoundary": {
+      "farWithin": 4,
+      "preBoundary": 2,
+      "boundary": 2,
+      "postBoundary": 2,
+      "total": 10
+    },
+    "pairedItemBoundary": {
+      "withinState": 2,
+      "zeroAcross": 2,
+      "oneAcross": 2,
+      "threeAcross": 2,
+      "total": 8
+    },
+    "recognition": {
+      "oldItems": 12,
+      "newItems": 12,
+      "includeBoundary": true,
+      "includeMatchedNonboundary": true
+    }
+  },
+  "pairDefinitions": {
+    "zeroAcross": "predecessor (pos N-1) + boundary item (pos N)",
+    "oneAcross": "predecessor (pos N-1) + successor (pos N+1)",
+    "threeAcross": "secondPre (pos N-2) + secondPost (pos N+2)",
+    "withinState": "two items from same latent state, matched lag"
+  }
+}

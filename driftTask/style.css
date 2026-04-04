@@ -1,0 +1,332 @@
+/**
+ * style.css – Shared visual rules for the main task.
+ * Revised so the encoding bar stays in a fixed location across encoding.
+ */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  background: #f7f8fa;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #222;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+#task-container {
+  width: 100%;
+  max-width: 960px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32px 24px 40px 24px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* ===========================================================
+ * CORE REGIONS
+ * =========================================================== */
+
+#instruction-region,
+#response-region,
+#btn-region {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#instruction-region {
+  min-height: 72px;
+}
+
+#response-region {
+  min-height: 120px;
+  flex-direction: column;
+}
+
+#btn-region {
+  min-height: 64px;
+}
+
+/* ===========================================================
+ * ENCODING FRAME
+ * This frame reserves stable rows for item / value / bar.
+ * =========================================================== */
+
+#encoding-frame {
+  width: 100%;
+  max-width: 800px;
+  min-height: 430px;
+
+  display: grid;
+  grid-template-rows: 240px 56px 56px;
+  justify-items: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* The three encoding subregions stay fixed in size and position */
+#item-region,
+#value-region,
+#bar-region {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+#item-region {
+  min-height: 240px;
+}
+
+#value-region {
+  min-height: 56px;
+}
+
+#bar-region {
+  min-height: 56px;
+}
+
+/* Preserve value-region height even when empty */
+#value-region:empty::before {
+  content: "";
+  display: block;
+  height: 40px;
+  width: 1px;
+  visibility: hidden;
+}
+
+/* ===========================================================
+ * TEXT / INSTRUCTIONS
+ * =========================================================== */
+
+.instr-text {
+  width: 100%;
+  max-width: 720px;
+  text-align: center;
+  line-height: 1.55;
+  font-size: 20px;
+}
+
+.reward-value {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.reward-hidden {
+  visibility: hidden;
+}
+
+/* ===========================================================
+ * ITEM STIMULI
+ * =========================================================== */
+
+.item-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stim-img {
+  display: block;
+  object-fit: contain;
+  border-radius: 10px;
+  background: transparent;
+}
+
+.paired-items {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 80px;
+}
+
+.paired-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===========================================================
+ * FIXATION / BLANK
+ * =========================================================== */
+
+.fixation {
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ===========================================================
+ * BAR
+ * =========================================================== */
+
+.bar-container,
+.bar-placeholder {
+  width: 80%;
+  height: 28px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.bar-container {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: none;
+}
+
+.bar-placeholder {
+  background: transparent;
+  border: none;
+}
+
+/* ===========================================================
+ * PLACEMENT SCALES
+ * =========================================================== */
+
+.placement-scale {
+  position: relative;
+  width: 80%;
+  height: 36px;
+  box-sizing: border-box;
+  cursor: pointer;
+  margin: 0 auto;
+}
+
+.scale-plain {
+  background: transparent;
+}
+
+.scale-rich {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.scale-labels {
+  width: 80%;
+  margin: 10px auto 0 auto;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #666;
+}
+
+.scale-marker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 100%;
+  border-left: 3px solid #1f1f1f;
+  pointer-events: none;
+}
+
+.marker-a,
+.marker-b {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.placing-label {
+  margin-bottom: 14px;
+  font-size: 18px;
+  text-align: center;
+}
+
+/* ===========================================================
+ * BUTTONS
+ * =========================================================== */
+
+.btn-next,
+.btn-confirm,
+.btn-recog {
+  appearance: none;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 22px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1f6feb;
+  color: #fff;
+}
+
+.btn-next:hover,
+.btn-confirm:hover,
+.btn-recog:hover {
+  opacity: 0.92;
+}
+
+.btn-confirm {
+  margin-top: 18px;
+}
+
+.recog-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-old {
+  background: #2f7d32;
+}
+
+.btn-new {
+  background: #8b1e3f;
+}
+
+/* ===========================================================
+ * SMALL-SCREEN SAFETY
+ * =========================================================== */
+
+@media (max-width: 700px) {
+  #task-container {
+    padding: 20px 14px 28px 14px;
+  }
+
+  #encoding-frame {
+    min-height: 390px;
+    grid-template-rows: 220px 52px 52px;
+  }
+
+  .instr-text {
+    font-size: 18px;
+  }
+
+  .reward-value {
+    font-size: 30px;
+  }
+
+  .paired-items {
+    gap: 28px;
+  }
+}

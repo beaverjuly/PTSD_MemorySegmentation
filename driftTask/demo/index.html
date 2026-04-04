@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilot Demo Browser</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="demo-wrapper">
+    <h1>Temporal-Context Pilot – Demo Browser</h1>
+    <p class="demo-subtitle">Select a combination below to preview the screen.</p>
+
+    <div class="control-panel">
+      <div class="control-group">
+        <label>Version</label>
+        <div class="btn-group" data-group="version">
+          <button data-val="simple" class="active">Simple</button>
+          <button data-val="rich">Rich</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Block</label>
+        <div class="btn-group" data-group="block">
+          <button data-val="noBoundary" class="active">No-Boundary</button>
+          <button data-val="boundary">Boundary</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Screen</label>
+        <div class="btn-group" data-group="screen">
+          <button data-val="encoding" class="active">Encoding</button>
+          <button data-val="single">Single Placement</button>
+          <button data-val="paired">Paired Placement</button>
+          <button data-val="recognition">Recognition</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Encoding Phase</label>
+        <div class="btn-group" data-group="phase">
+          <button data-val="itemOnly" class="active">Item Only</button>
+          <button data-val="itemValue">Item + Value</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="preview-frame">
+      <div id="task-container">
+        <div id="instruction-region"></div>
+        <div id="item-region"></div>
+        <div id="value-region"></div>
+        <div id="bar-region"></div>
+        <div id="response-region"></div>
+        <div id="btn-region"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/render.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>
