@@ -1,6 +1,7 @@
 /**
  * style.css – Shared visual rules for the main task.
- * Revised so the encoding bar stays in a fixed location across encoding.
+ * Revised so the encoding bar stays in a fixed location across encoding,
+ * and the item frame remains visible even when no image is shown.
  */
 
 html, body {
@@ -76,7 +77,6 @@ body {
   box-sizing: border-box;
 }
 
-/* The three encoding subregions stay fixed in size and position */
 #item-region,
 #value-region,
 #bar-region {
@@ -120,6 +120,26 @@ body {
   font-size: 20px;
 }
 
+.value-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.value-frame {
+  min-width: 120px;
+  height: 46px;
+  padding: 0 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e3e6eb;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
 .reward-value {
   min-height: 40px;
   display: flex;
@@ -136,6 +156,7 @@ body {
 
 /* ===========================================================
  * ITEM STIMULI
+ * Persistent white frame + slight fade transition
  * =========================================================== */
 
 .item-wrap {
@@ -145,11 +166,49 @@ body {
   align-items: center;
 }
 
+.item-frame {
+  width: 220px;
+  height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e3e6eb;
+  border-radius: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.item-frame-empty {
+  background: #ffffff;
+}
+
 .stim-img {
   display: block;
+  width: 220px;
+  height: 220px;
   object-fit: contain;
   border-radius: 10px;
   background: transparent;
+  opacity: 1;
+}
+
+.stim-fade {
+  animation: stimFadeIn 120ms ease-out;
+}
+
+.stim-img.fade-out {
+  opacity: 0;
+  transition: opacity 120ms ease-in-out;
+}
+
+@keyframes stimFadeIn {
+  from {
+    opacity: 0.15;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .paired-items {
@@ -328,5 +387,11 @@ body {
 
   .paired-items {
     gap: 28px;
+  }
+
+  .item-frame,
+  .stim-img {
+    width: 200px;
+    height: 200px;
   }
 }

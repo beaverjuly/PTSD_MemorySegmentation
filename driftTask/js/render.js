@@ -6,6 +6,10 @@
  * - item-only phase
  * - item+value phase
  * - encoding ITI
+ *
+ * Also revised so:
+ * - a persistent white item frame remains on screen
+ * - item images fade in briefly
  */
 
 const Render = (() => {
@@ -68,12 +72,6 @@ const Render = (() => {
     if ($btnArea) $btnArea.style.display = '';
   }
 
-  function clearEncodingRegions() {
-    if ($itemArea) $itemArea.innerHTML = '';
-    if ($valueArea) $valueArea.innerHTML = '';
-    if ($barArea) $barArea.innerHTML = '';
-  }
-
   /* ===========================================================
    * INSTRUCTION SCREEN
    * =========================================================== */
@@ -97,23 +95,26 @@ const Render = (() => {
 
   /* ===========================================================
    * ENCODING SCREENS
-   * The bar remains in the same region throughout.
    * =========================================================== */
 
   function showItemOnly(filename, trialIndex) {
     clearAll();
     showEncodingLayout();
 
-    renderItemImage(filename);
+    renderItemImage(filename, true);   // fade only on first appearance
     renderHiddenValuePlaceholder();
     renderBar(trialIndex);
   }
 
   function showItemValue(filename, value, trialIndex) {
-    clearAll();
     showEncodingLayout();
 
-    renderItemImage(filename);
+    // Do NOT re-render the image if it is already there
+    const existingImg = $itemArea.querySelector('.stim-img');
+    if (!existingImg) {
+      renderItemImage(filename, false);
+    }
+
     renderValue(value);
     renderBar(trialIndex);
   }
@@ -122,7 +123,7 @@ const Render = (() => {
     clearAll();
     showEncodingLayout();
 
-    $itemArea.innerHTML = '';
+    renderEmptyItemFrame();
     renderHiddenValuePlaceholder();
     renderBar(trialIndex);
   }
@@ -131,7 +132,7 @@ const Render = (() => {
     clearAll();
     showEncodingLayout();
 
-    $itemArea.innerHTML = '<div class="fixation">+</div>';
+    renderFixationInFrame();
     renderHiddenValuePlaceholder();
 
     if (trialIndex !== null && trialIndex !== undefined) {
@@ -173,8 +174,16 @@ const Render = (() => {
 
     $itemArea.innerHTML = `
       <div class="paired-items">
-        <div class="paired-item">${imgTag(filenameA, 'item-a')}</div>
-        <div class="paired-item">${imgTag(filenameB, 'item-b')}</div>
+        <div class="paired-item">
+          <div class="item-frame">
+            ${imgTag(filenameA, 'item-a')}
+          </div>
+        </div>
+        <div class="paired-item">
+          <div class="item-frame">
+            ${imgTag(filenameB, 'item-b')}
+          </div>
+        </div>
       </div>
     `;
 
@@ -253,11 +262,12 @@ const Render = (() => {
    * INTERNAL HELPERS
    * =========================================================== */
 
-  function imgTag(filename, cls = '') {
+  function imgTag(filename, cls = '', animate = true) {
     const src = CONFIG.imgDir + filename;
+    const animClass = animate ? 'stim-fade' : '';
     return `
       <img
-        class="stim-img ${cls}"
+        class="stim-img ${cls} ${animClass}"
         src="${src}"
         alt="${filename}"
         width="${CONFIG.imgSize}"
@@ -267,20 +277,62 @@ const Render = (() => {
     `;
   }
 
-  function renderItemImage(filename) {
-    $itemArea.innerHTML = `<div class="item-wrap">${imgTag(filename)}</div>`;
+  function renderItemImage(filename, animate = true) {
+    $itemArea.innerHTML = `
+      <div class="item-wrap">
+        <div class="item-frame">
+          ${imgTag(filename, '', animate)}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderEmptyItemFrame() {
+    $itemArea.innerHTML = `
+      <div class="item-wrap">
+        <div class="item-frame item-frame-empty"></div>
+      </div>
+    `;
+  }
+
+  function renderFixationInFrame() {
+    $itemArea.innerHTML = `
+      <div class="item-wrap">
+        <div class="item-frame">
+          <div class="fixation">+</div>
+        </div>
+      </div>
+    `;
   }
 
   function renderValue(value) {
-    $valueArea.innerHTML = `<div class="reward-value">${value}</div>`;
+    $valueArea.innerHTML = `
+      <div class="value-wrap">
+        <div class="value-frame">
+          <div class="reward-value">${value}</div>
+        </div>
+      </div>
+    `;
   }
 
   function renderHiddenValuePlaceholder() {
-    $valueArea.innerHTML = `<div class="reward-value reward-hidden">&nbsp;</div>`;
+    $valueArea.innerHTML = `
+      <div class="value-wrap">
+        <div class="value-frame">
+          <div class="reward-value reward-hidden">&nbsp;</div>
+        </div>
+      </div>
+    `;
   }
 
   function renderEmptyValueSlot() {
-    $valueArea.innerHTML = `<div class="reward-value reward-hidden">&nbsp;</div>`;
+    $valueArea.innerHTML = `
+      <div class="value-wrap">
+        <div class="value-frame">
+          <div class="reward-value reward-hidden">&nbsp;</div>
+        </div>
+      </div>
+    `;
   }
 
   function renderEmptyBarSlot() {
@@ -324,7 +376,6 @@ const Render = (() => {
 
   /**
    * Single-item placement scale.
-   * Response scale occupies the same general visual slot as the encoding bar.
    */
   function renderPlacementScale(totalTrials, onClick) {
     const isRich = CONFIG.bar.show;
