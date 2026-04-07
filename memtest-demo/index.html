@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MemTest Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">MemTest Demo</div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-section="preview">Encoding &amp; Memory Test</button>
+    <button class="nav-tab" data-section="schedule">Reward Schedule</button>
+    <button class="nav-tab" data-section="streams">Recognition Streams</button>
+  </nav>
+</header>
+
+<main class="main-content">
+
+  <!-- Section 1: Encoding & Memory Test Preview -->
+  <div id="section-preview" class="section active">
+    <div class="preview-tabs">
+      <button class="preview-tab active" data-preview="encoding-a">Encoding Phase A</button>
+      <button class="preview-tab" data-preview="encoding-b">Encoding Phase B</button>
+      <button class="preview-tab" data-preview="block1-recog">Block 1 Recognition</button>
+      <button class="preview-tab" data-preview="block2-recog">Block 2 Recognition</button>
+      <button class="preview-tab" data-preview="block3">Block 3 Temporal Order</button>
+    </div>
+    <div id="preview-area"></div>
+  </div>
+
+  <!-- Section 2: Reward Schedule Editor -->
+  <div id="section-schedule" class="section">
+    <div id="schedule-editor"></div>
+  </div>
+
+  <!-- Section 3: Recognition Stream Builder -->
+  <div id="section-streams" class="section">
+    <div id="stream-builder"></div>
+  </div>
+
+</main>
+
+<script src="data/schedules.js"></script>
+<script src="data/streams.js"></script>
+<script src="data/placeholders.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/scheduleEditor.js"></script>
+<script src="js/streamBuilder.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
