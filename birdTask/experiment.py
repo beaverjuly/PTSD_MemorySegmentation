@@ -4,24 +4,24 @@ from .io import write_data, write_metadata
 ## Initialize blueprint.
 bp = Blueprint('experiment', __name__)
 
+# ── Block design ───────────────────────────────────────────────────
+# Each block defines: volatility, stochasticity, and valence.
+# Order: [block1, block2, block3, block4]
+BLOCK_VOL     = [4, 49, 4, 49]
+BLOCK_STC     = [16, 16, 64, 64]
+BLOCK_VALENCE = ['reward', 'reward', 'loss', 'loss']
+
+# Land assets per valence
+LAND_ASSETS = {
+    'reward': 'img/task_assets/reward/layer_reward.png',
+    'loss':   'img/task_assets/loss/layer_loss.png',
+}
+
+
 def dev_bootstrap_session_from_query():
     """
     DEV ONLY: allow direct entry to /experiment* without going through "/".
-
-    Priority:
-    1. Use explicit workerId / assignmentId / hitId if provided.
-    2. Fall back to Prolific-style params:
-       - PROLIFIC_PID -> workerId
-       - SESSION_ID   -> assignmentId
-       - STUDY_ID     -> hitId
-    3. If dev=1, allow local dummy defaults.
-
-    Frontend developer-mode params (dev, stage, ntrials, block) are handled
-    entirely in the HTML/JS via URLSearchParams and need no Python logic here.
     """
-
-
-    # Do not overwrite an existing session
     if "workerId" in session:
         return
 
@@ -43,7 +43,6 @@ def dev_bootstrap_session_from_query():
         or ""
     )
 
-    # In explicit dev mode, allow safe dummy defaults
     if is_dev and not worker_id:
         worker_id = "dev123"
     if is_dev and not assignment_id:
@@ -51,7 +50,6 @@ def dev_bootstrap_session_from_query():
     if is_dev and not hit_id:
         hit_id = "devH"
 
-    # Still missing a worker id -> let normal error handling occur
     if not worker_id:
         return
 
@@ -59,93 +57,85 @@ def dev_bootstrap_session_from_query():
     session["assignmentId"] = assignment_id
     session["hitId"] = hit_id
 
-    # These must exist because templates and redirect endpoints expect them
     session.setdefault("code_success", current_app.config.get("CODE_SUCCESS", ""))
     session.setdefault("code_reject", current_app.config.get("CODE_REJECT", ""))
     session.setdefault("data", current_app.config.get("DATA_DIR", ""))
     session.setdefault("metadata", current_app.config.get("META_DIR", ""))
     session.setdefault("reject", current_app.config.get("REJECT_DIR", ""))
 
+
+def _block_params():
+    """Return the 4-block condition structure for the frontend."""
+    return {
+        'block_vol': BLOCK_VOL,
+        'block_stc': BLOCK_STC,
+        'block_valence': BLOCK_VALENCE,
+        'land_assets': {v: LAND_ASSETS[v] for v in set(BLOCK_VALENCE)},
+    }
+
+
 @bp.route('/experiment')
 def experiment():
     dev_bootstrap_session_from_query()
     """Present jsPsych experiment to participant."""
 
-    ## Error-catching: screen for missing session.
-    if not 'workerId' in session:
-
-        ## Redirect participant to error (missing workerId).
+    if 'workerId' not in session:
         return redirect(url_for('error.error', errornum=1000))
 
-    ## Case 1: previously completed experiment.
     elif 'complete' in session:
-
-        ## Update metadata.
         session['WARNING'] = "Revisited experiment page."
         write_metadata(session, ['WARNING'], 'a')
-
-        ## Redirect participant to complete page.
         return redirect(url_for('complete.complete'))
 
-    ## Case 2: repeat visit.
     elif 'experiment' in session and not current_app.config.get("DEBUG_ALLOW_REPEAT", True):
-        ## Update participant metadata.
         session['ERROR'] = "1004: Revisited experiment."
         session['complete'] = 'error'
-        write_metadata(session, ['ERROR','complete'], 'a')
-
-        ## Redirect participant to error (previous participation).
+        write_metadata(session, ['ERROR', 'complete'], 'a')
         return redirect(url_for('error.error', errornum=1004))
 
-    ## Case 3: first visit.
     else:
-
-        ## Update participant metadata.
         session['experiment'] = True
         write_metadata(session, ['experiment'], 'a')
 
-        ## Present experiment.
-        return (
-            render_template(
-                'experiment.html',
-                workerId=session['workerId'],
-                assignmentId=session['assignmentId'],
-                hitId=session['hitId'],
-                code_success=session['code_success'],
-                code_reject=session['code_reject'],
-            )
+        params = _block_params()
+
+        return render_template(
+            'experiment.html',
+            workerId=session['workerId'],
+            assignmentId=session['assignmentId'],
+            hitId=session['hitId'],
+            code_success=session['code_success'],
+            code_reject=session['code_reject'],
+            block_vol=params['block_vol'],
+            block_stc=params['block_stc'],
+            block_valence=params['block_valence'],
+            land_assets=params['land_assets'],
         )
 
-
-# -----------------------------------------------------------------------------
-# Additional route: /experiment_noinstr
-# -----------------------------------------------------------------------------
 
 @bp.route('/experiment_noinstr')
 def experiment_noinstr():
     dev_bootstrap_session_from_query()
     """Present jsPsych experiment without instructions to participant."""
 
-    # Error-catching: screen for missing session.
-    if not 'workerId' in session:
+    if 'workerId' not in session:
         return redirect(url_for('error.error', errornum=1000))
 
-    # Case 1: previously completed experiment.
     if 'complete' in session:
         session['WARNING'] = "Revisited experiment page."
         write_metadata(session, ['WARNING'], 'a')
         return redirect(url_for('complete.complete'))
 
-    # Case 2: repeat visit.
     if 'experiment' in session and not current_app.config.get("DEBUG_ALLOW_REPEAT", True):
         session['ERROR'] = "1004: Revisited experiment."
         session['complete'] = 'error'
         write_metadata(session, ['ERROR', 'complete'], 'a')
         return redirect(url_for('error.error', errornum=1004))
 
-    # Case 3: first visit.
     session['experiment'] = True
     write_metadata(session, ['experiment'], 'a')
+
+    params = _block_params()
 
     return render_template(
         'experiment_noinstr.html',
@@ -154,73 +144,51 @@ def experiment_noinstr():
         hitId=session['hitId'],
         code_success=session['code_success'],
         code_reject=session['code_reject'],
+        block_vol=params['block_vol'],
+        block_stc=params['block_stc'],
+        block_valence=params['block_valence'],
+        land_assets=params['land_assets'],
     )
+
 
 @bp.route('/experiment', methods=['POST'])
 def pass_message():
     """Write jsPsych message to metadata."""
-
     if request.is_json:
-
-        ## Retrieve jsPsych data.
         msg = request.get_json()
-
-        ## Update participant metadata.
         session['MESSAGE'] = msg
         write_metadata(session, ['MESSAGE'], 'a')
-
     return ('', 200)
 
-@bp.route('/redirect_success', methods = ['POST'])
+
+@bp.route('/redirect_success', methods=['POST'])
 def redirect_success():
     """Save complete jsPsych dataset to disk."""
-
     if request.is_json:
-
-        ## Retrieve jsPsych data.
         JSON = request.get_json()
-
-        ## Save jsPsch data to disk.
         write_data(session, JSON, method='pass')
-
-    ## Flag experiment as complete.
     session['complete'] = 'success'
-    write_metadata(session, ['complete','code_success'], 'a')
-
+    write_metadata(session, ['complete', 'code_success'], 'a')
     return ('', 200)
 
-@bp.route('/redirect_reject', methods = ['POST'])
+
+@bp.route('/redirect_reject', methods=['POST'])
 def redirect_reject():
     """Save rejected jsPsych dataset to disk."""
-
     if request.is_json:
-
-        ## Retrieve jsPsych data.
         JSON = request.get_json()
-
-        ## Save jsPsch data to disk.
         write_data(session, JSON, method='reject')
-
-    ## Flag experiment as complete.
     session['complete'] = 'reject'
-    write_metadata(session, ['complete','code_reject'], 'a')
-
+    write_metadata(session, ['complete', 'code_reject'], 'a')
     return ('', 200)
 
-@bp.route('/redirect_error', methods = ['POST'])
+
+@bp.route('/redirect_error', methods=['POST'])
 def redirect_error():
     """Save rejected jsPsych dataset to disk."""
-
     if request.is_json:
-
-        ## Retrieve jsPsych data.
         JSON = request.get_json()
-
-        ## Save jsPsch data to disk.
         write_data(session, JSON, method='reject')
-
-    ## Flag experiment as complete.
     session['complete'] = 'error'
     write_metadata(session, ['complete'], 'a')
-
     return ('', 200)

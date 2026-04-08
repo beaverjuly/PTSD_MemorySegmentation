@@ -1,7 +1,36 @@
 
-var stimuli_version = "v08";
-var factors_vol = [4, 49, 4, 49];
-var factors_stc = [16, 16, 64, 64];
+var stimuli_version = "v09";
+
+// ── Block design ──────────────────────────────────────────────────
+// Block 1: reward, high vol / low sto
+// Block 2: reward, low vol / high sto
+// Block 3: loss,   high vol / low sto
+// Block 4: loss,   low vol / high sto
+//
+// Convention:
+//   vol 49 = high volatility,  vol 4  = low volatility
+//   stc 64 = high stochasticity, stc 16 = low stochasticity
+var factors_vol = [49, 4, 49, 4];
+var factors_stc = [16, 64, 16, 64];
+var factors_valence = ['reward', 'reward', 'loss', 'loss'];
+
+// ── Latent change-point documentation ─────────────────────────────
+// The latent bird/drone trajectory contains abrupt jumps (change points)
+// at specific serial positions within each 50-trial block.  These are
+// relevant for the slider-memory test which probes items near boundaries.
+//
+// High-volatility blocks (vol = 49, blocks 1 & 3):
+//   Change points at trials: 3, 5, 11, 19, 25, 37, 39, 47
+//   (frequent jumps — mean run length ≈ 49 trials equivalent)
+//
+// Low-volatility blocks (vol = 4, blocks 2 & 4):
+//   Change points at trials: 3, 5, 11, 15, 19, 21, 25, 29, 31, 37, 39, 45, 47
+//   (infrequent jumps — mean run length ≈ 4 trials)
+//
+// The six slider-memory pairs that straddle change points:
+//   [2,4]   [11,13]   [16,18]   [22,24]   [34,36]   [39,41]
+// For each pair the middle item (3, 12, 17, 23, 35, 40) may or may not
+// sit on a change point depending on the block's volatility schedule.
 
 var practice_bag_position = [
 	[57.349,67.747,56.168,64.153,71.952,78.877,68.78,68.03,75.309,82.184,61.193,61.554,70.756,74.713,79.699,76.142,67.515,73.378,65.231,60.974,66.369,73.609,69.924,66.916,56.155,64.316,67.842,68.096,73.969,58.099,64.794,67.012,57.162,68.873,71.183,81.587,69.566,59.935,72.316,68.248,59.185,59.445,38.543,41.158,50.988,52.986,56.839,46.948,48.404,50.041],
@@ -24,3 +53,7 @@ var main_bird_position = [
 	[60,58.702,61.064,61.064,57.328,57.328,57.328,57.328,57.328,57.328,57.328,51.388,51.388,51.388,53.14,53.14,53.14,53.14,46.517,46.517,52.925,52.925,52.925,52.925,60.691,60.691,54.776,54.776,54.776,54.776,54.776,56.801,56.801,56.801,56.801,56.801,60.625,60.625,60.625,64.419,64.419,64.419,64.419,64.419,64.419,62.109,62.109,57.704,57.704,59.555],
 	[60,55.457,63.725,63.725,50.649,50.649,50.649,50.649,50.649,50.649,50.649,29.859,29.859,29.859,35.99,35.99,35.99,35.99,12.81,12.81,35.24,35.24,35.24,35.24,62.424,62.424,39.089,39.089,39.089,39.089,39.089,46.178,46.178,46.178,46.178,46.178,59.564,59.564,59.564,72.844,72.844,72.844,72.844,72.844,72.844,64.759,64.759,49.34,49.34,55.824],
 ];
+
+var SLIDER_PAIRS = [[2,4],[11,13],[16,18],[22,24],[34,36],[39,41]];
+var BOUNDARY_MIDDLE_PAIRS = [[2,4],[11,13],[39,41]];
+var NONBOUNDARY_MIDDLE_PAIRS = [[16,18],[22,24],[34,36]];

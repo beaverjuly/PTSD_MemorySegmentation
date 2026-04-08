@@ -1,7 +1,6 @@
 .game-container {
   height: 80vh;
   width: 60vw;
-  /* width: 1200px; height: 700px; */
   position: relative;
   -webkit-transform: translate(-50%, 0%);
   transform: translate(-50%, 0%);
@@ -10,11 +9,12 @@
   overflow: hidden;
   left: 50%;
   top: 5%;
+  background: #000;
 }
+
 .main-container {
   height: 68.5vh;
   width: 60vw;
-  /* width: 1200px; height: 600px; */
   position: absolute;
   top: 0%;
   left: 50%;
@@ -22,156 +22,103 @@
   transform: translate(-50%, 0%);
   z-index: 3;
 }
+
+/* ── Sky / Land / Light layers ── */
 .bg-sky {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('../img/block_backgrounds/sky.png') no-repeat center top / cover;
-  /* Lowest layer behind everything else */
+  background: url('../img/task_assets/shared/sky.png') no-repeat center top / cover;
   z-index: 0;
 }
+
 .bg-land {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 100%; /* anchors to bottom half, allow transparent top to reveal sky */
-  /* Land layer sits above the sky and light overlay */
+  height: 100%;
   z-index: 2;
 }
+
 .light1 {
   position: absolute;
   height: 100%;
   width: 100%;
-  background: linear-gradient(to bottom, #d4c042 0%, #FFEA61 100%);
+  background: linear-gradient(to bottom, rgba(255, 234, 97, 0.12), rgba(0, 0, 0, 0));
   opacity: 0%;
-  /* Place the light overlay between the sky and land. */
   z-index: 1;
-}
-.gold {
-  position: absolute;
-  background: radial-gradient(circle at 30% 30%, #ffffe6 0%, #ffd700 60%, #b8860b 100%);
-  border: 0.07vw solid #b8860b;
-  left: 35%;
-  height: .7vw;
-  width: .7vw;
-  border-radius: 100%;
-  animation: idle;
-  animation-timing-function: linear;
-  animation-duration: 1s;
-  animation-iteration-count: 1;
-  opacity: 100%;
-  /* transition: all 200ms ease-in; */
-  /* animation-timing-function: cubic-bezier(0.1, 0.7, 1.0, 1); */
-  /* animation-timing-function: steps(4, end);   */
-}
-@keyframes drop {
-  from {top: 85%; transform: translateX(0)}
-  to {top: 115%; transform: translateX(0)}
-}
-@keyframes drop_left {
-  from {top: 85%; transform: translateX(0)}
-  to {top: 115%; transform: translateX(-20px)}
-}
-@keyframes drop_right {
-  from {top: 85%; transform: translateX(0)}
-  to {top: 115%; transform: translateX(20px)}
-}
-@keyframes idle {
-  top: 100%;
-  visibility: hidden;
-}
-.gold{
-  top: 115%;
-}
-.expl1 {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  fill: #FFD400;
-  overflow: visible;
-  left: 600px;
-  top: 80%;
-  height: 15%;
-  width: 15%;
-  content: url("../img/expl.png");
-  animation: nope;
-  animation-timing-function: linear;
-  animation-iteration-count: 1;
-  animation-duration: 3s;
-  opacity: 0%;
-}
-@keyframes explode {
-  from {opacity: 100%;}
-  to {opacity: 0%;}
-}
-@keyframes nope {
-  opacity: 0%;
-}
-.bag {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  left: 35%;
-  height: 8%;
-  width: 8%;
-  content: url("../img/coin-bag.png");
-  animation: idle;
-  animation-timing-function: ease-in;
-  animation-duration: 1s;
-  animation-iteration-count: 1;
-  opacity: 0%;
-  /* width: 1.95vw; */
-  height: auto;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
-@keyframes bagdrop {
-  0% { top: 15%; opacity: 100%; }
-  80% { top: 85%; opacity: 100%;}
-  100% { top: 85%; visibility: 0%;}
-}
-@keyframes idle {
-  top: 85%;
-  visibility: hidden;
-}
-@keyframes disappear {
-  visibility: hidden;
-}
-.bag{
-  top: 115%;
-  opacity: 0%;
-}
-.stimulus-img {
+/* ── Collector (bucket / shield) ── */
+.collector-wrap {
   position: absolute;
-  z-index: 5;
+  bottom: -4%;
+  width: 15%;
+  aspect-ratio: 1.1 / 1;
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
 }
+
+.collector-base,
+.collector-glow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.collector-glow {
+  opacity: 0.25;
+}
+
+/* Legacy bucket classes (kept for any remaining references) */
 .bucket1 {
   position: absolute;
-  -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  fill: #FFD400;
   overflow: visible;
   left: 600px;
   top: 104%;
   height: 15%;
   width: 15%;
-  content: url("../img/red-buck1.png");
+  content: url("../img/task_assets/shared/bucket1.png");
   opacity: 100%;
 }
+
 .bucket2 {
   position: absolute;
-  -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
-  fill: #FFD400;
   overflow: visible;
   left: 600px;
   top: 104%;
   height: 15%;
   width: 15%;
-  content: url("../img/red-buck2.png");
+  content: url("../img/task_assets/shared/bucket2.png");
   opacity: 0%;
-  z-index: +1;
+  z-index: 1;
 }
+
+/* ── Drone ── */
+.drone-el {
+  position: absolute;
+  top: 4%;
+  width: 9%;
+  transform: translateX(-50%);
+  z-index: 6;
+  visibility: hidden;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.4));
+  user-select: none;
+  pointer-events: none;
+  image-rendering: auto;
+}
+
+/* Legacy bird classes (kept for compatibility) */
 .bird {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -183,18 +130,297 @@
   opacity: 100%;
   visibility: hidden;
 }
-.bird[number='0'] {
-  content: url("../img/bird0.png");
+
+.bird[number='0'] { content: url("../img/task_assets/reward/drone0.png"); }
+.bird[number='1'] { content: url("../img/task_assets/reward/drone1.png"); }
+.bird[number='2'] { content: url("../img/task_assets/reward/drone2.png"); }
+.bird[number='3'] { content: url("../img/task_assets/reward/drone3.png"); }
+.bird[number='4'] { content: url("../img/task_assets/reward/drone4.png"); }
+
+/* ── Drop bag ── */
+.drop-bag {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 7%;
+  height: auto;
+  z-index: 7;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
+  user-select: none;
+  pointer-events: none;
 }
-.bird[number='1'] {
-  content: url("../img/bird1.png");
+
+/* Legacy bag class */
+.bag {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  left: 35%;
+  height: auto;
+  width: 8%;
+  animation: idle;
+  animation-timing-function: ease-in;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  opacity: 0%;
+  top: 115%;
+  content: url("../img/task_assets/reward/supply-bag.png");
 }
-.bird[number='2'] {
-  content: url("../img/bird2.png");
+
+@keyframes bagdrop {
+  0% {
+    top: 18%;
+    opacity: 100%;
+  }
+  80% {
+    top: 82%;
+    opacity: 100%;
+  }
+  100% {
+    top: 82%;
+    opacity: 0%;
+  }
 }
-.bird[number='3'] {
-  content: url("../img/bird3.png");
+
+@keyframes idle {
+  top: 85%;
+  visibility: hidden;
 }
-.bird[number='4'] {
-  content: url("../img/bird4.png");
+
+/* ── Drop objects (replaces gold coins) ── */
+.drop-obj {
+  position: absolute;
+  width: 3vw;
+  min-width: 20px;
+  max-width: 40px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  z-index: 8;
+  visibility: hidden;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.12));
+}
+
+/* Legacy gold class */
+.gold {
+  position: absolute;
+  left: 35%;
+  height: 0.7vw;
+  width: 0.7vw;
+  border-radius: 100%;
+  animation: idle;
+  animation-timing-function: linear;
+  animation-duration: 1s;
+  animation-iteration-count: 1;
+  opacity: 100%;
+  top: 115%;
+  background: radial-gradient(circle at 30% 30%, #ffffe6 0%, #ffd700 60%, #b8860b 100%);
+  border: 0.07vw solid #b8860b;
+}
+
+@keyframes drop {
+  from {
+    top: 85%;
+    transform: translateX(0);
+  }
+  to {
+    top: 115%;
+    transform: translateX(0);
+  }
+}
+
+@keyframes drop_left {
+  from {
+    top: 85%;
+    transform: translateX(0);
+  }
+  to {
+    top: 115%;
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes drop_right {
+  from {
+    top: 85%;
+    transform: translateX(0);
+  }
+  to {
+    top: 115%;
+    transform: translateX(20px);
+  }
+}
+
+/* ── CSS Explosion (replaces expl.png) ── */
+.explosion-container {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.expl-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(22px, 4.5vw, 55px);
+  height: clamp(22px, 4.5vw, 55px);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.3);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.expl-flash.fire {
+  animation: flashPop 220ms ease-out forwards;
+}
+
+.expl-flash.reward {
+  background: radial-gradient(circle, rgba(255, 248, 190, 0.95), rgba(255, 215, 0, 0.45) 55%, transparent 100%);
+}
+
+.expl-flash.loss {
+  background: radial-gradient(circle, rgba(255, 210, 210, 0.95), rgba(255, 68, 68, 0.45) 55%, transparent 100%);
+}
+
+@keyframes flashPop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 1;
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+.expl-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.expl-ring.fire {
+  animation: ringExpand 400ms cubic-bezier(.22, .61, .36, 1) forwards;
+}
+
+.expl-ring.reward {
+  border: 2.5px solid rgba(255, 215, 0, 0.65);
+  box-shadow:
+    0 0 16px 4px rgba(255, 215, 0, 0.25),
+    inset 0 0 10px rgba(255, 215, 0, 0.12);
+}
+
+.expl-ring.loss {
+  border: 2.5px solid rgba(255, 68, 68, 0.65);
+  box-shadow:
+    0 0 16px 4px rgba(255, 68, 68, 0.25),
+    inset 0 0 10px rgba(255, 68, 68, 0.12);
+}
+
+@keyframes ringExpand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.9;
+  }
+  45% {
+    opacity: 0.75;
+  }
+  100% {
+    width: clamp(65px, 10vw, 130px);
+    height: clamp(65px, 10vw, 130px);
+    opacity: 0;
+  }
+}
+
+.expl-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.expl-particle.reward {
+  background: radial-gradient(circle, #fffbe0, #ffd700);
+  box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
+}
+
+.expl-particle.loss {
+  background: radial-gradient(circle, #ffd4d4, #ff4444);
+  box-shadow: 0 0 4px rgba(255, 68, 68, 0.5);
+}
+
+/* Legacy explosion class */
+.expl1 {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+  left: 600px;
+  top: 80%;
+  height: 15%;
+  width: 15%;
+  animation: nope;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-duration: 3s;
+  opacity: 0%;
+}
+
+@keyframes explode {
+  from { opacity: 100%; }
+  to   { opacity: 0%; }
+}
+
+@keyframes nope {
+  opacity: 0%;
+}
+
+/* ── Feedback overlay ── */
+.fb-overlay {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(15px, 2vw, 29px);
+  font-weight: 800;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 8px 28px;
+  border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ── Stimulus image ── */
+.stimulus-img {
+  position: absolute;
+  z-index: 15;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+/* ── Legacy helper classes retained for compatibility ── */
+.star {
+  display: none;
+}
+
+@keyframes disappear {
+  visibility: hidden;
 }

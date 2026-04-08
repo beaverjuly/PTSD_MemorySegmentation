@@ -25,20 +25,9 @@
   <script src="../static/js/jspsych-survey-template.js" type="text/javascript"></script>
   <script src="../static/js/jspsych-screen-check.js"></script>
 
-  <!-- Load RPM -->
-  <!--   <script src="../static/rpm/rpm_tfa.js"></script>
-  <script src="../static/rpm/rpm_tfb.js"></script>
-  <script src="../static/rpm/jspsych-rpm.js"></script> -->
-
   <!-- Load experiment -->
   <script src="../static/task/trial.js" type="text/javascript"></script>
-  <!-- Load the memory task plugin. -->
   <script src="../static/task/memory_task.js" type="text/javascript"></script>
-
-  <!-- ====================================================================
-       DISCOUNTING TASK — COMMENTED OUT (preserved for future restoration)
-       ==================================================================== -->
-  <!-- <script src="../static/task/discounting_task.js" type="text/javascript"></script> -->
 
   <link href="../static/task/game.min.css" rel="stylesheet" type="text/css"></link>
   <script src="../static/task/stimuli.js" type="text/javascript"></script>
@@ -47,7 +36,6 @@
   <script src="../static/task/comprehension2.js" type="text/javascript"></script>
   <script src="../static/task/termination.js" type="text/javascript"></script>
   <script src="../static/task/instructions.js" type="text/javascript"></script>
-  <!-- <script src="../static/task/rpm-experiment.js" type="text/javascript"></script> -->
 
   <meta charset="UTF-8">
   <style>
@@ -61,16 +49,6 @@
   // ========================================================================
   // UNIFIED DEV MODE CONTROLS
   // ========================================================================
-  // URL query parameters:
-  //   dev=1              — enable developer mode
-  //   stage=<string>     — which stage to run:
-  //       bird           — bird-game trials only
-  //       memory         — memory task only (seeds fake data)
-  //       termination    — standalone dev termination screen
-  //       full           — full no-instructions experiment (default)
-  //   ntrials=<int>      — cap bird trials per block (dev mode only)
-  //   block=<int>        — which block to target (for memory stage; default 1)
-  // ========================================================================
   var _devParams = new URLSearchParams(window.location.search);
   var DEV_MODE   = _devParams.get('dev') === '1';
   var DEV_STAGE  = _devParams.get('stage') || 'full';
@@ -81,23 +59,6 @@
     console.log('[DEV] Developer mode ENABLED (noinstr)');
     console.log('[DEV] stage=' + DEV_STAGE + ', ntrials=' + DEV_NTRIALS + ', block=' + DEV_BLOCK);
   }
-
-  // ========================================================================
-  // LEGACY DEV SKIP MODE — COMMENTED OUT
-  // ========================================================================
-  // The following legacy dev mechanisms have been replaced by the unified
-  // URL-param system above. They are preserved here for reference.
-  //
-  // --- LEGACY: skipblock query parameter ---
-  // Previously, adding ?skipblock=1 to the URL would seed fake data and
-  // jump directly to the discounting + memory tasks. This has been
-  // superseded by ?dev=1&stage=memory (or stage=bird, etc.).
-  //
-  // --- LEGACY: DEV_SKIP_MODE constant ---
-  // Previously, a const DEV_SKIP_MODE could be set to "none",
-  // "discounting", or "memory" to skip parts of the experiment.
-  // This has been superseded by the URL param system.
-  // ========================================================================
 
   //------------------------------------//
   // Initial verification
@@ -112,15 +73,16 @@
 
   var randomized = jsPsych.randomization.shuffle([0,1,2,3]);
 
+  // ── CHANGE A: added true_valence ──
   var welcome = {
     type: 'instructions',
     pages: [
-        '<p style="font-size:30px"><strong>Welcome to the bird game!</strong> </p> <p style="font-size:20px"<br><br> Please follow the instructions and complete the task. It will take approximately 50 min. <br><br> There will be a game, followed by a questionnaire. <br><br> Bonus money will be processed based on game performance and questionnaire data quality checks. To ensure maximal payment, please read all instructions, pay close attention to the game, and read through every questionnaire item.</p>',
+        '<p style="font-size:30px"><strong>Welcome to the drone game!</strong> </p> <p style="font-size:20px"<br><br> Please follow the instructions and complete the task. It will take approximately 50 min. <br><br> There will be a game, followed by a questionnaire. <br><br> Bonus money will be processed based on game performance and questionnaire data quality checks. To ensure maximal payment, please read all instructions, pay close attention to the game, and read through every questionnaire item.</p>',
     ],
     show_clickable_nav: true,
     button_label_previous: "Prev",
     button_label_next: "Next",
-    data: {task_version: 'v2.0', stimuli_version: stimuli_version, true_vol: factors_vol, true_stc: factors_stc, randomized: randomized},
+    data: {task_version: 'v2.0', stimuli_version: stimuli_version, true_vol: factors_vol, true_stc: factors_stc, true_valence: factors_valence, randomized: randomized},
   };
 
   //------------------------------------//
@@ -330,10 +292,8 @@
     "../static/img/stimulus_set/yarn.jpg",
   ];
 
-  // Shuffle the stimulus set once at the beginning of the experiment.
   stimulus_set_images = jsPsych.randomization.shuffle(stimulus_set_images);
 
-  // In dev mode, optionally restrict stimulus set for faster testing.
   if (DEV_MODE && DEV_NTRIALS > 0) {
     var _devSubsetSize = Math.max(DEV_NTRIALS * 4, 50);
     if (stimulus_set_images.length > _devSubsetSize) {
@@ -342,15 +302,14 @@
     }
   }
 
-  // Define backgrounds.
-  const sky_background = '../static/img/block_backgrounds/sky.png';
+  const sky_background = '../static/img/task_assets/shared/sky.png';
   const block_land_backgrounds = [
-    '../static/img/block_backgrounds/layer1.png',
-    '../static/img/block_backgrounds/layer2.png',
-    '../static/img/block_backgrounds/layer3.png',
-    '../static/img/block_backgrounds/layer4.png'
-  ];
-  const practice_land_background = '../static/img/block_backgrounds/practice_land_background.png';
+  '../static/img/task_assets/reward/layer_reward_highVol.png',
+  '../static/img/task_assets/reward/layer_reward_lowVol.png',
+  '../static/img/task_assets/loss/layer_loss_highVol.png',
+  '../static/img/task_assets/loss/layer_loss_lowVol.png'
+  ];  
+  const practice_land_background = '../static/img/task_assets/shared/practice_land_background.png';
 
   window.sky_background = sky_background;
 
@@ -398,7 +357,6 @@
         bag_position = main_bag_position;
         bird_position = main_bird_position;
 
-        // DEV MODE: cap main-block trial count if ntrials is set
         if (DEV_MODE && DEV_NTRIALS > 0) {
           num_trials = Math.min(num_trials, DEV_NTRIALS);
           console.log('[DEV] Capping main block trials to ' + num_trials);
@@ -407,10 +365,10 @@
 
     var stayed_threshold = 4;
     var birds = [
-        "../static/img/bird1.png",
-        "../static/img/bird2.png",
-        "../static/img/bird3.png",
-        "../static/img/bird4.png"
+      "../static/img/task_assets/reward/drone1.png",
+      "../static/img/task_assets/reward/drone2.png",
+      "../static/img/task_assets/reward/drone3.png",
+      "../static/img/task_assets/reward/drone4.png"
     ];
 
     var trials = [];
@@ -424,20 +382,24 @@
     for (var j = 0; j < num_birds; j++) {
         if (bird_trial) {
             trials.push({
-                type: 'image-keyboard-response',
-                prompt: '<p>A new bird and wind condition! Press use the arrow keys or the space bar to begin (auto in 20s)</p>',
-                choices: [32, 37, 39],
-                trial_duration: 20000,
-                timeline: [{ stimulus: birds[randomized[j]] }]
-            });
+            type: 'image-keyboard-response',
+            stimulus: birds[randomized[j]],
+            stimulus_width: 220,
+            maintain_aspect_ratio: true,
+            prompt: '<p>A new drone and wind condition! Press the arrow keys or the space bar to begin (auto in 20s)</p>',
+            choices: [32, 37, 39],
+            trial_duration: 20000
+          });
 
-            trials.push({
-                type: 'image-keyboard-response',
-                prompt: '<p>Beginning...</p>',
-                choices: jsPsych.NO_KEYS,
-                trial_duration: 3000,
-                timeline: [{ stimulus: birds[randomized[j]] }]
-            });
+          trials.push({
+            type: 'image-keyboard-response',
+            stimulus: birds[randomized[j]],
+            stimulus_width: 220,
+            maintain_aspect_ratio: true,
+            prompt: '<p>Beginning...</p>',
+            choices: jsPsych.NO_KEYS,
+            trial_duration: 3000
+          });
         }
 
         for (var i = 0; i < num_trials; i++) {
@@ -453,6 +415,7 @@
 
             var stim_img = stimulus_set_images[k % stimulus_set_images.length];
 
+            // ── CHANGES B & C: added valence, fixed vol/stc mapping ──
             const trial_te = {
                 type: 'trial',
                 data: {
@@ -464,8 +427,9 @@
 
                 true_vol_param: (practice_no === 0 ? factors_vol[j] : null),
                 true_stc_param: (practice_no === 0 ? factors_stc[j] : null),
-                vol_level: (practice_no === 0 ? (factors_vol[j] === 4 ? "low" : "high") : null),
-                stc_level: (practice_no === 0 ? (factors_stc[j] === 16 ? "low" : "high") : null),
+                vol_level: (practice_no === 0 ? (factors_vol[j] === 49 ? "high" : "low") : null),
+                stc_level: (practice_no === 0 ? (factors_stc[j] === 64 ? "high" : "low") : null),
+                valence: (practice_no === 0 ? factors_valence[j] : 'reward'),
 
                 stim_img: stim_img,
                 background_img: sky_background,
@@ -536,18 +500,15 @@
     }
 
     return trials;
-  }; // end make_trials
+  };
 
-  //------------------------------------//
-  // Define main and practice trials
-  //------------------------------------//
   var practice1_core = make_trials(1,randomized);
   var practice2 = make_trials(2,randomized);
   var practice3 = make_trials(3,randomized);
   var practice4 = make_trials(4,randomized);
   var trials = make_trials(0,randomized);
 
-  // Factory to create a memory timeline for a given block.
+  // ── CHANGE E: updated memory intro text ──
   function create_memory_timeline(blockNum) {
     var timeline = [];
     var pairCount = (typeof PREDEFINED_PAIRS !== 'undefined' && Array.isArray(PREDEFINED_PAIRS))
@@ -555,7 +516,7 @@
       : 0;
     timeline.push({
       type: 'html-keyboard-response',
-      stimulus: '<p style="font-size:24px; text-align:center;">For each pair of items presented, select the item that you believe was displayed first during the game.<br><br><br>Next, indicate how many items you believe were displayed in between the pair shown.<br><br>You may type a number or use the arrows on the screen or keyboard.<br><br><br>Press the space bar or arrow key to continue.</p>',
+      stimulus: '<p style="font-size:24px; text-align:center;">For each pair of items presented, first select the item that you believe was displayed first during the game.<br><br>Next, indicate how many items you believe were shown in between the pair.<br><br>On some trials, you will also place the middle item on a slider relative to its neighboring items.<br><br>Press the space bar or arrow key to continue.</p>',
       choices: [32, 37, 38, 39, 40],
       trial_duration: 15000
     });
@@ -569,50 +530,28 @@
     return timeline;
   }
 
-  // ========================================================================
-  // MOCK DATA INJECTION FOR ISOLATED MEMORY TASK UI TESTING
-  // ========================================================================
-  // WHERE: This function is defined before timeline assembly and called 
-  //        right before the memory timeline is added to the main timeline.
-  //
-  // WHEN:  It executes ONLY when the URL contains '?dev=1&stage=memory' 
-  //        (i.e., DEV_MODE is true and DEV_STAGE === 'memory').
-  //
-  // WHY:   The memory_task.js plugin expects exactly 50 preceding game trials 
-  //        in jsPsych.data. It searches these 50 trials to extract the 
-  //        specific paired images (e.g., trials 2 and 4). If we skip the 
-  //        game phase, jsPsych.data is empty, causing the plugin to crash.
-  //
-  // HOW:   We loop 50 times and use jsPsych.data.get().push() to insert 
-  //        50 synthetic trial records. Crucially, we must include specific 
-  //        metadata so `memory_task.js` accepts the data:
-  //        1. `trial_type: 'trial'` (filtered by plugin)
-  //        2. `block: blockNum` (filtered by plugin)
-  //        3. `true_vol_param: 1` (CRITICAL: the plugin explicitly filters 
-  //           out trials where this is null to ignore practice trials).
-  //        4. `trial: i + 1` (used by the plugin to sort trials 1-50)
-  //        5. `stim_img` (the fallback image to display)
-  // ========================================================================
+  // ── CHANGE D: fixed seedFakeBirdData ──
   function seedFakeBirdData(blockNum, numTrials) {
     numTrials = numTrials || 50;
     
-    // Grab a subset of valid images from your preloaded stimulus_set_images
     var fakeImgs = stimulus_set_images.slice(0, numTrials); 
     
-    // 1. Inject block-level parameters
-    // memory_task.js looks for true_vol and true_stc arrays in history
+    // Inject block-level parameters including valence
     jsPsych.data.get().push({
-      true_vol: [1, 2, 3, 4],
-      true_stc: [12, 12, 12, 16]
+      true_vol: factors_vol,
+      true_stc: factors_stc,
+      true_valence: factors_valence
     });
 
-    // 2. Inject the 50 trial records
+    // Inject per-trial records with block-specific values
     for (var i = 0; i < numTrials; i++) {
       jsPsych.data.get().push({
         trial_type: 'trial',
         block: blockNum,
         trial: i + 1,
-        true_vol_param: 1,
+        true_vol_param: factors_vol[blockNum - 1],
+        true_stc_param: factors_stc[blockNum - 1],
+        valence: factors_valence[blockNum - 1],
         stim_img: fakeImgs[i]
       });
     }
@@ -656,9 +595,6 @@
   practice1 = practice1.concat(practice1_loop);
   practice1 = practice1.concat(practice1_check);
 
-  //------------------------------------//
-  // Define the instruction and practice loops
-  //------------------------------------//
   var low_quality = false;
   var comprehension1_loop_timeline = [inst1_incorrect];
   comprehension1_loop_timeline = comprehension1_loop_timeline.concat(inst1);
@@ -781,41 +717,33 @@
     button_label_next: "Finish"
   };
 
-  //------------------------------------//
-  // Preload images
-  //------------------------------------//
-  preload_images = [
-    '../static/img/imga1.jpg',
-    '../static/img/imga2.jpg',
-    '../static/img/imgb1.jpg',
-    '../static/img/imgb2.jpg',
-    '../static/img/imgb3.jpg',
-    '../static/img/imgc1.jpg',
-    '../static/img/imgc2.jpg',
-    '../static/img/imgc3.jpg',
-    '../static/img/imgd1.jpg',
-    '../static/img/imgd2.jpg',
-    '../static/img/imgd3.jpg',
-    '../static/img/imge1.jpg',
-    '../static/img/bird0.png',
-    '../static/img/bird1.png',
-    '../static/img/bird2.png',
-    '../static/img/bird3.png',
-    '../static/img/bird4.png',
-    '../static/img/coin-bag.png',
-    '../static/img/expl.png',
-    '../static/img/red-buck1.png',
-    '../static/img/red-buck2.png',
-    '../static/img/star.png',
-    '../static/img/block_backgrounds/sky.png',
-    '../static/img/block_backgrounds/layer1.png',
-    '../static/img/block_backgrounds/layer2.png',
-    '../static/img/block_backgrounds/layer3.png',
-    '../static/img/block_backgrounds/layer4.png',
-    '../static/img/block_backgrounds/practice_land_background.png',
-  ];
+preload_images = [
+  '../static/img/task_assets/shared/sky.png',
+  '../static/img/task_assets/shared/practice_land_background.png',
+  '../static/img/task_assets/shared/bucket1.png',
+  '../static/img/task_assets/shared/bucket2.png',
 
-  // Add progress check for questionnaires
+  '../static/img/task_assets/reward/drone0.png',
+  '../static/img/task_assets/reward/drone1.png',
+  '../static/img/task_assets/reward/drone2.png',
+  '../static/img/task_assets/reward/drone3.png',
+  '../static/img/task_assets/reward/drone4.png',
+  '../static/img/task_assets/reward/supply-bag.png',
+  '../static/img/task_assets/reward/supply-dot.png',
+  '../static/img/task_assets/reward/layer_reward_highVol.png',
+  '../static/img/task_assets/reward/layer_reward_lowVol.png',
+
+  '../static/img/task_assets/loss/drone0.png',
+  '../static/img/task_assets/loss/hazard-bag.png',
+  '../static/img/task_assets/loss/hazard-dot.png',
+  '../static/img/task_assets/loss/layer_loss_highVol.png',
+  '../static/img/task_assets/loss/layer_loss_lowVol.png',
+
+  '../static/img/task_assets/practice/apple.jpg',
+  '../static/img/task_assets/practice/banana.jpg',
+  '../static/img/task_assets/practice/blueberry.jpg'
+];
+
   var feedback_p1 = {
     type: 'instructions',
     pages: [
@@ -835,9 +763,6 @@
     button_label_next: "Next"
   };
 
-  //------------------------------------//
-  // Conditional attention check
-  //------------------------------------//
   var attentionCheckFailPage = {
     type: 'instructions',
     pages: [
@@ -850,7 +775,6 @@
     timeline: [attentionCheckFailPage],
     conditional_function: function () {
       var attentionCheckData = jsPsych.data.getLastTrialData().values()[0]['infrequency'];
-
       if (attentionCheckData !== 0) {
         failedAttentionChecksCount++;
         console.log(attentionCheckData);
@@ -860,94 +784,18 @@
     }
   };
 
-  //------------------------------------//
-  // Define the experiment
-  //------------------------------------//
-
   var low_quality = false;
   var failedAttentionChecksCount = 0;
 
-  // ====================================================================
-  // CONSOLIDATED TIMELINE ASSEMBLY
-  // ====================================================================
   var timeline = [];
 
   (async function() {
 
-    // ================================================================
-    // LEGACY DEV: skipblock query parameter — COMMENTED OUT
-    // ================================================================
-    // Previously, adding ?skipblock=1 would:
-    //   1. Seed 50 fake trial rows
-    //   2. Build a minimal timeline: welcome → seed → discounting → memory → feedback → finish
-    //   3. Skip the normal game loop
-    //
-    // const _urlParams = new URLSearchParams(window.location.search);
-    // const _devSkipBlock = _urlParams.has('skipblock');
-    // if (_devSkipBlock) {
-    //   let _cond;
-    //   try {
-    //     if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
-    //       _cond = 'vol' + factors_vol[randomized[0]] + '_stc' + factors_stc[randomized[0]];
-    //     } else {
-    //       _cond = randomized[0];
-    //     }
-    //   } catch (err) {
-    //     _cond = randomized[0];
-    //   }
-    //   window.current_land_img = block_land_backgrounds[randomized[0] % block_land_backgrounds.length];
-    //   const _seedBlock = {
-    //     type: 'call-function',
-    //     func: function() {
-    //       const fakeImgs = stimulus_set_images.slice(0, 50);
-    //       for (let i = 0; i < 50; i++) {
-    //         jsPsych.data.write({
-    //           trial_type: 'trial',
-    //           block: 1,
-    //           trial: i + 1,
-    //           stim_img: fakeImgs[i]
-    //         });
-    //       }
-    //     }
-    //   };
-    //   const _discTimeline = await runDelayDiscounting(_cond);
-    //   const _memTimeline  = create_memory_timeline(1);
-    //   let _devTL = [];
-    //   _devTL = _devTL.concat(welcome);
-    //   _devTL.push(_seedBlock);
-    //   _devTL = _devTL.concat(_discTimeline);
-    //   _devTL = _devTL.concat(_memTimeline);
-    //   _devTL = _devTL.concat(feedback1);
-    //   _devTL = _devTL.concat(finish);
-    //   jsPsych.init({
-    //     timeline: _devTL,
-    //     show_progress_bar: true,
-    //     preload_images: preload_images,
-    //     on_finish: function() {
-    //       window.removeEventListener("beforeunload", verify_unload);
-    //       var interaction_data = jsPsych.data.getInteractionData();
-    //       jsPsych.data.get().addToLast({interactions: interaction_data.json()});
-    //       if (low_quality) {
-    //         redirect_reject("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_reject}}");
-    //       } else {
-    //         redirect_success("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_success}}");
-    //       }
-    //     }
-    //   });
-    //   return;
-    // }
-    // ================================================================
-
-    // Demographics survey
     var survey_demographics = {
       type: 'survey-demo',
       button_label: 'Continue'
     };
 
-    // -----------------------------------------------------------------
-    // Build the bird+memory combined trials array.
-    // Used by stage=bird, stage=full, and normal mode.
-    // -----------------------------------------------------------------
     function buildBirdMemoryTrials() {
       var num_blocks = randomized.length;
       if (num_blocks === 0) return trials;
@@ -961,25 +809,6 @@
         var block_trials = trials.slice(start_idx, end_idx);
         new_trials = new_trials.concat(block_trials);
 
-        // ============================================================
-        // LEGACY DISCOUNTING INTEGRATION — COMMENTED OUT
-        // ============================================================
-        // var conditionTag;
-        // try {
-        //   if (typeof factors_vol !== 'undefined' && typeof factors_stc !== 'undefined') {
-        //     conditionTag = 'vol' + factors_vol[randomized[b]] + '_stc' + factors_stc[randomized[b]];
-        //   } else {
-        //     conditionTag = randomized[b];
-        //   }
-        // } catch (err) {
-        //   conditionTag = randomized[b];
-        // }
-        // window.current_land_img = block_land_backgrounds[randomized[b] % block_land_backgrounds.length];
-        // var discount_tl = await runDelayDiscounting(conditionTag);
-        // new_trials = new_trials.concat(discount_tl);
-        // ============================================================
-
-        // Append the memory timeline for this block
         var mem_tl = create_memory_timeline(b + 1);
         new_trials = new_trials.concat(mem_tl);
       }
@@ -987,19 +816,11 @@
       return new_trials;
     }
 
-    // -----------------------------------------------------------------
-    // Stage-based timeline construction
-    // -----------------------------------------------------------------
     if (DEV_MODE && DEV_STAGE === 'memory') {
       console.log('[DEV] Stage: memory task only');
-      
-      // Call the mock data generator BEFORE queuing the memory timeline
       seedFakeBirdData(DEV_BLOCK, 50);
-      
-      // Queue the memory task
       var memTL = create_memory_timeline(DEV_BLOCK);
       timeline = timeline.concat(memTL);
-      
       timeline.push({
         type: 'html-keyboard-response',
         stimulus: '<p>Dev Memory Stage Complete. Press any key to end.</p>',
@@ -1026,10 +847,7 @@
         type: 'html-keyboard-response',
         stimulus: '<p style="font-size:24px;"><strong>[DEV] Termination Screen</strong></p>' +
           '<p style="font-size:18px;">This is a standalone termination page for development testing.</p>' +
-          '<p style="font-size:18px;">In production, this screen appears when a participant fails ' +
-          'comprehension checks twice.</p>' +
-          '<p style="font-size:16px; color:#d9534f; margin-top:30px;">The game has been terminated ' +
-          'due to incorrect comprehension responses.</p>' +
+          '<p style="font-size:16px; color:#d9534f; margin-top:30px;">The game has been terminated.</p>' +
           '<p style="font-size:14px; color:#555; margin-top:20px;">Press any key to end.</p>',
         choices: jsPsych.ALL_KEYS
       });
@@ -1048,70 +866,14 @@
       timeline = timeline.concat(finish);
     }
 
-    // ================================================================
-    // LEGACY DEV_SKIP_MODE — COMMENTED OUT
-    // ================================================================
-    // Previously, a const DEV_SKIP_MODE = "none" | "discounting" | "memory"
-    // was used to skip parts of the experiment. This has been replaced by
-    // the URL param system above.
-    //
-    // const DEV_SKIP_MODE = "none";
-    // if (DEV_SKIP_MODE !== "none") {
-    //   const dev_seed_block = {
-    //     type: "call-function",
-    //     func: function() {
-    //       const fakeImgs = stimulus_set_images.slice(0, 50);
-    //       for (let i = 0; i < 50; i++) {
-    //         jsPsych.data.write({
-    //           trial_type: "trial",
-    //           block: 1,
-    //           trial: i + 1,
-    //           stim_img: fakeImgs[i]
-    //         });
-    //       }
-    //       console.log("[DEV] Seeded 50 fake trials for block 1");
-    //     }
-    //   };
-    //   const dev_message = {
-    //     type: "html-keyboard-response",
-    //     stimulus: DEV_SKIP_MODE === "discounting"
-    //       ? "<p><strong>DEV MODE</strong><br>Skipping directly to discounting task.<br>Press any key.</p>"
-    //       : "<p><strong>DEV MODE</strong><br>Skipping directly to memory task.<br>Press any key.</p>"
-    //   };
-    //   timeline = [dev_message, dev_seed_block];
-    //   if (DEV_SKIP_MODE === "discounting") {
-    //     timeline.push({
-    //       type: "call-function",
-    //       func: async function() {
-    //         const discount_tl = await runDelayDiscounting("DEV");
-    //         jsPsych.addNodeToEndOfTimeline(
-    //           { timeline: discount_tl },
-    //           jsPsych.resumeExperiment
-    //         );
-    //       }
-    //     });
-    //   }
-    //   if (DEV_SKIP_MODE === "memory") {
-    //     const memTL = create_memory_timeline(1);
-    //     timeline = timeline.concat(memTL);
-    //   }
-    // }
-    // ================================================================
-
-    // -----------------------------------------------------------------
-    // Initialize jsPsych
-    // -----------------------------------------------------------------
     jsPsych.init({
       timeline: timeline,
       show_progress_bar: true,
       preload_images: preload_images,
       on_finish: function() {
-
         window.removeEventListener("beforeunload", verify_unload);
-
         var interaction_data = jsPsych.data.getInteractionData();
         jsPsych.data.get().addToLast({ interactions: interaction_data.json() });
-
         if (low_quality) {
           redirect_reject("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_reject}}");
         } else {
