@@ -57,3 +57,55 @@ var main_bird_position = [
 var SLIDER_PAIRS = [[2,4],[11,13],[16,18],[22,24],[34,36],[39,41]];
 var BOUNDARY_MIDDLE_PAIRS = [[2,4],[11,13],[39,41]];
 var NONBOUNDARY_MIDDLE_PAIRS = [[16,18],[22,24],[34,36]];
+
+
+// ── Drop object distribution (kept for data compatibility) ────────
+var drop_obj_distribution_default = [-4.25, -3, -1.75, -0.75, -0.25, 0.25, 0.75, 1.75, 3, 4.25];
+var drop_obj_duration_default = [350, 400, 500, 550, 600, 600, 600, 500, 500, 400];
+
+function get_drop_obj_distribution() {
+  return drop_obj_distribution_default;
+}
+
+function get_drop_obj_duration() {
+  return drop_obj_duration_default;
+}
+
+// Legacy aliases
+var coins_distribution = [];
+var coins_duration = [];
+for (var _i = 0; _i < 200; _i++) {
+  coins_distribution.push(drop_obj_distribution_default.slice());
+  coins_duration.push(drop_obj_duration_default.slice());
+}
+
+// ── Emoji stimulus pool ───────────────────────────────────────────
+// 220 uncommon object/scene emojis (no faces, people, or symbols).
+// Shuffled per participant; 200 needed for 4 blocks × 50 trials.
+var EMOJI_STIMULUS_POOL = [
+  "🪃", "🪀", "🪆", "🪅", "🪄", "🪠", "🪤", "🪣", "🪥", "🪦",
+  "🪧", "🪨", "🪩", "🪫", "🪬", "🪭", "🪮", "🪯", "🪰", "🪱",
+  "🪲", "🪳", "🪴", "🪵", "🪶", "🪷", "🪸", "🪹", "🪺", "🫎",
+  "🫏", "🫐", "🫑", "🫒", "🫓", "🫔", "🫕", "🫖", "🫗", "🫘",
+  "🧊", "🧋", "🧭", "🧮", "🧯", "🧰", "🧱", "🧲", "🧳", "🧴",
+  "🧵", "🧶", "🧷", "🧸", "🧹", "🧺", "🧻", "🧼", "🧽", "🧾",
+  "🛗", "🛝", "🛞", "🛟", "🛠", "🛡", "🛢", "🛸", "🛹", "🛺",
+  "🛻", "🛼", "🪈", "🪗", "🪘", "🪙", "🪚", "🪛", "🪜", "🪝",
+  "🪞", "🪟", "🎐", "🎑", "🎒", "🎓", "🎠", "🎡", "🎢", "🎣",
+  "🎤", "🎧", "🎪", "🎬", "🎭", "🎯", "🎰", "🎱", "🎲", "🎳",
+  "🎴", "🎵", "🎷", "🎸", "🎹", "🎺", "🎻", "🎼", "🏈", "🏉",
+  "🏏", "🏐", "🏑", "🏒", "🏓", "🏔", "🏕", "🏖", "🏗", "🏘",
+  "🏙", "🏚", "🏛", "🏜", "🏝", "🏞", "🏟", "🏠", "🏡", "🏢",
+  "🏣", "🏤", "🏥", "🏦", "🏧", "🏨", "🏩", "🏪", "🏫", "🏬",
+  "🏭", "🏮", "🏯", "🏰", "🗻", "🗼", "🗽", "🗾", "🗿", "🌋",
+  "🌌", "🌍", "🌎", "🌏", "🌐", "🌡", "🌤", "🌥", "🌦", "🌧",
+  "🌨", "🌩", "🌪", "🌫", "🌬", "🌭", "🌮", "🌯", "🌰", "🌶",
+  "🍄", "🍇", "🍈", "🍉", "🍊", "🍋", "🍌", "🍍", "🍎", "🍏",
+  "🍐", "🍑", "🍒", "🍓", "🍔", "🍕", "🍖", "🍗", "🍘", "🍙",
+  "🍚", "🍛", "🍜", "🍝", "🍞", "🍟", "🍠", "🍡", "🍢", "🍣",
+  "🍤", "🍥", "🍦", "🍧", "🍨", "🍩", "🍪", "🍫", "🍬", "🍭",
+  "🍮", "🍯", "🍰", "🍱", "🍲", "🍳", "🍴", "🍵", "🍶", "🍷"
+];
+
+// Practice emoji (3, matching the 3 practice trials)
+var PRACTICE_EMOJI = ["🧩", "🪁", "🎲"];

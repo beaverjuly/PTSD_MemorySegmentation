@@ -15,7 +15,7 @@
 
   <!-- New plug-ins -->
   <script src="../static/lib/jspsych-6.3.1/plugins/jspsych-survey-multi-choice.js" type="text/javascript"></script>
-  <script src="../static/lib/jspsych-6.3.1/plugins/jspsych-survey-likert.js" type="text/javascript"></script>  
+  <script src="../static/lib/jspsych-6.3.1/plugins/jspsych-survey-likert.js" type="text/javascript"></script>
   <script src="../static/lib/jspsych-6.3.1/plugins/jspsych-survey-multi-select.js" type="text/javascript"></script>
   <script src="../static/lib/jspsych-6.3.1/plugins/jspsych-survey-text.js" type="text/javascript"></script>
 
@@ -39,85 +39,71 @@
 
   <meta charset="UTF-8">
   <style>
-      body { margin: 50px;} 
-      .jspsych-content img {
-        will-change: transform;
-        transform: translateZ(0);
-        backface-visibility: hidden;
-      }
-      .jspsych-display-element {
-        transition: opacity 0.12s ease-in-out;
-      }
-      .jspsych-display-element.transitioning {
-        opacity: 0;
-      }
-  </style>
+    body {
+      margin: 50px;
+    }
 
+    .jspsych-display-element {
+      transition: opacity 0.12s ease-in-out;
+    }
+
+    .jspsych-display-element.transitioning {
+      opacity: 0;
+    }
+  </style>
 </head>
 <body></body>
 <script>
-
   var _devParams = new URLSearchParams(window.location.search);
-  var DEV_MODE   = _devParams.get('dev') === '1';
-  var DEV_STAGE  = _devParams.get('stage') || 'full';
+  var DEV_MODE = _devParams.get('dev') === '1';
+  var DEV_STAGE = _devParams.get('stage') || 'full';
   var DEV_NTRIALS = parseInt(_devParams.get('ntrials'), 10) || 0;
-  var DEV_BLOCK   = parseInt(_devParams.get('block'), 10) || 1;
+  var DEV_BLOCK = parseInt(_devParams.get('block'), 10) || 1;
 
   if (DEV_MODE) {
     console.log('[DEV] Developer mode ENABLED');
     console.log('[DEV] stage=' + DEV_STAGE + ', ntrials=' + DEV_NTRIALS + ', block=' + DEV_BLOCK);
   }
 
-  function verify_unload(e){
+  function verify_unload(e) {
     e.preventDefault();
     (e || window.event).returnValue = null;
     return null;
-  };
+  }
+
   window.addEventListener("beforeunload", verify_unload);
 
-  var randomized = jsPsych.randomization.shuffle([0,1,2,3]);
+  var randomized = jsPsych.randomization.shuffle([0, 1, 2, 3]);
 
-  // ── CHANGE A: added true_valence ──
   var welcome = {
     type: 'instructions',
     pages: [
-        '<p style="font-size:30px"><strong>Welcome to the bird game!</strong> </p> <p style="font-size:20px"<br><br> Please follow the instructions and complete the task. It will take approximately 50 min. <br><br> There will be a game, followed by a questionnaire. <br><br> Bonus money will be processed based on game performance and questionnaire data quality checks. To ensure maximal payment, please read all instructions, pay close attention to the game, and read through every questionnaire item.</p>',
+      '<p style="font-size:30px"><strong>Welcome to the drone game!</strong> </p> <p style="font-size:20px"><br><br> Please follow the instructions and complete the task. It will take approximately 50 min. <br><br> There will be a game, followed by a questionnaire. <br><br> Bonus money will be processed based on game performance and questionnaire data quality checks. To ensure maximal payment, please read all instructions, pay close attention to the game, and read through every questionnaire item.</p>'
     ],
     show_clickable_nav: true,
     button_label_previous: "Prev",
     button_label_next: "Next",
-    data: {task_version: 'v2.0', stimuli_version: stimuli_version, true_vol: factors_vol, true_stc: factors_stc, true_valence: factors_valence, randomized: randomized},
+    data: {
+      task_version: 'v3.0-emoji',
+      stimuli_version: stimuli_version,
+      true_vol: factors_vol,
+      true_stc: factors_stc,
+      true_valence: factors_valence,
+      randomized: randomized
+    }
   };
 
-  var practice_stimulus_images = [
-    "../static/img/task_assets/practice/apple.jpg",
-    "../static/img/task_assets/practice/banana.jpg",
-    "../static/img/task_assets/practice/blueberry.jpg"
-  ];
-   
-  var stimulus_set_images = [
-    "../static/img/stimulus_set/aceofdiamond.jpg","../static/img/stimulus_set/acousticguitar02.jpg","../static/img/stimulus_set/airplane.jpg","../static/img/stimulus_set/airpump.jpg","../static/img/stimulus_set/anchor.jpg","../static/img/stimulus_set/apron.jpg","../static/img/stimulus_set/axe01.jpg","../static/img/stimulus_set/babybottle.jpg","../static/img/stimulus_set/backpack.jpg","../static/img/stimulus_set/badmintonracket.jpg","../static/img/stimulus_set/balloon01b.jpg","../static/img/stimulus_set/banjo.jpg","../static/img/stimulus_set/barrel01.jpg","../static/img/stimulus_set/baseball.jpg","../static/img/stimulus_set/baseball_bat.jpg","../static/img/stimulus_set/basket.jpg","../static/img/stimulus_set/basketball.jpg","../static/img/stimulus_set/battery03a.jpg","../static/img/stimulus_set/battleship.jpg","../static/img/stimulus_set/beach_ball.jpg","../static/img/stimulus_set/beerbottle.jpg","../static/img/stimulus_set/bell.jpg","../static/img/stimulus_set/belt01b.jpg","../static/img/stimulus_set/bib.jpg","../static/img/stimulus_set/bike_helmet.jpg","../static/img/stimulus_set/binder03a.jpg","../static/img/stimulus_set/binocularcase01a.jpg","../static/img/stimulus_set/binoculars01b.jpg","../static/img/stimulus_set/bird_house.jpg","../static/img/stimulus_set/birdfeeder.jpg","../static/img/stimulus_set/birdie.jpg","../static/img/stimulus_set/blow_drier.jpg","../static/img/stimulus_set/book01a.jpg","../static/img/stimulus_set/bottleofredwine02.jpg","../static/img/stimulus_set/bow.jpg","../static/img/stimulus_set/bowl01.jpg","../static/img/stimulus_set/bowling_pin.jpg","../static/img/stimulus_set/bowlingball.jpg","../static/img/stimulus_set/bowtie.jpg","../static/img/stimulus_set/box01a.jpg","../static/img/stimulus_set/boxcutter04b.jpg","../static/img/stimulus_set/boxingglove02b.jpg","../static/img/stimulus_set/bracelet02a.jpg","../static/img/stimulus_set/briefcase.jpg","../static/img/stimulus_set/broom.jpg","../static/img/stimulus_set/butter_knife.jpg","../static/img/stimulus_set/calculator.jpg","../static/img/stimulus_set/camera01b.jpg","../static/img/stimulus_set/can_opener.jpg","../static/img/stimulus_set/candelabra.jpg","../static/img/stimulus_set/candle.jpg","../static/img/stimulus_set/carkeys.jpg","../static/img/stimulus_set/chair.jpg","../static/img/stimulus_set/change_purse.jpg","../static/img/stimulus_set/cheeseknife01.jpg","../static/img/stimulus_set/chords.jpg","../static/img/stimulus_set/christmaslights.jpg","../static/img/stimulus_set/cigar.jpg","../static/img/stimulus_set/clock.jpg","../static/img/stimulus_set/coffee_maker.jpg","../static/img/stimulus_set/coffeepot01.jpg","../static/img/stimulus_set/collander.jpg","../static/img/stimulus_set/comb01a.jpg","../static/img/stimulus_set/compactpowder.jpg","../static/img/stimulus_set/cookingpot.jpg","../static/img/stimulus_set/cooler.jpg","../static/img/stimulus_set/curlingiron01a.jpg","../static/img/stimulus_set/curtain.jpg","../static/img/stimulus_set/cymbal.jpg","../static/img/stimulus_set/dart.jpg","../static/img/stimulus_set/dice01b.jpg","../static/img/stimulus_set/dirtspade.jpg","../static/img/stimulus_set/dolly02.jpg","../static/img/stimulus_set/doorhandle.jpg","../static/img/stimulus_set/doorknob.jpg","../static/img/stimulus_set/downhillski.jpg","../static/img/stimulus_set/drinkshaker.jpg","../static/img/stimulus_set/electricrazor.jpg","../static/img/stimulus_set/fan.jpg","../static/img/stimulus_set/flashlight03a.jpg","../static/img/stimulus_set/flower_lavendar.jpg","../static/img/stimulus_set/flower_red.jpg","../static/img/stimulus_set/flower_stargazerlilly.jpg","../static/img/stimulus_set/food_avocado.jpg","../static/img/stimulus_set/food_broccoli01b.jpg","../static/img/stimulus_set/food_carrot02.jpg","../static/img/stimulus_set/food_cilantro.jpg","../static/img/stimulus_set/food_cinnamon.jpg","../static/img/stimulus_set/food_coconut.jpg","../static/img/stimulus_set/food_cucumber.jpg","../static/img/stimulus_set/food_eggs.jpg","../static/img/stimulus_set/food_fig.jpg","../static/img/stimulus_set/food_grass.jpg","../static/img/stimulus_set/food_kiwi03.jpg","../static/img/stimulus_set/food_mushroom.jpg","../static/img/stimulus_set/food_oyster.jpg","../static/img/stimulus_set/food_pepper_corns.jpg","../static/img/stimulus_set/food_pumpkin.jpg","../static/img/stimulus_set/food_spinach.jpg","../static/img/stimulus_set/food_sweet_potato.jpg","../static/img/stimulus_set/hammer.jpg","../static/img/stimulus_set/headphones.jpg","../static/img/stimulus_set/hourglass.jpg","../static/img/stimulus_set/mirror.jpg","../static/img/stimulus_set/mortar_and_pestle.jpg","../static/img/stimulus_set/mug05.jpg","../static/img/stimulus_set/nailclipper02b.jpg","../static/img/stimulus_set/nature_bark.jpg","../static/img/stimulus_set/nature_feather.jpg","../static/img/stimulus_set/nature_pinecone.jpg","../static/img/stimulus_set/ocean_sand-dollar.jpg","../static/img/stimulus_set/ocean_seashell01.jpg","../static/img/stimulus_set/oneholepunch.jpg","../static/img/stimulus_set/packofgum.jpg","../static/img/stimulus_set/paddleball.jpg","../static/img/stimulus_set/paint.jpg","../static/img/stimulus_set/paintroller.jpg","../static/img/stimulus_set/paper_towels.jpg","../static/img/stimulus_set/pencil.jpg","../static/img/stimulus_set/pencil_sharpener.jpg","../static/img/stimulus_set/pencilcase02b.jpg","../static/img/stimulus_set/peppermill02b.jpg","../static/img/stimulus_set/phone.jpg","../static/img/stimulus_set/pictureframe.jpg","../static/img/stimulus_set/piggybank.jpg","../static/img/stimulus_set/pillow01a.jpg","../static/img/stimulus_set/plant_aloe.jpg","../static/img/stimulus_set/plant_leaf.jpg","../static/img/stimulus_set/plant_succulent.jpg","../static/img/stimulus_set/pliers.jpg","../static/img/stimulus_set/plugoutlet.jpg","../static/img/stimulus_set/plunger02.jpg","../static/img/stimulus_set/rainboot.jpg","../static/img/stimulus_set/razor04b.jpg","../static/img/stimulus_set/record.jpg","../static/img/stimulus_set/redbow.jpg","../static/img/stimulus_set/ridinghelmet.jpg","../static/img/stimulus_set/rolling_pin.jpg","../static/img/stimulus_set/rubberglove02b.jpg","../static/img/stimulus_set/saltshaker01.jpg","../static/img/stimulus_set/saw.jpg","../static/img/stimulus_set/scarf.jpg","../static/img/stimulus_set/scissors11.jpg","../static/img/stimulus_set/scooter.jpg","../static/img/stimulus_set/screwdriver.jpg","../static/img/stimulus_set/shovel02.jpg","../static/img/stimulus_set/skateboard.jpg","../static/img/stimulus_set/skigloves.jpg","../static/img/stimulus_set/skippingrope.jpg","../static/img/stimulus_set/slingshot.jpg","../static/img/stimulus_set/slinky.jpg","../static/img/stimulus_set/smokingpipe.jpg","../static/img/stimulus_set/snowboard.jpg","../static/img/stimulus_set/soap.jpg","../static/img/stimulus_set/soccer_ball.jpg","../static/img/stimulus_set/speaker04.jpg","../static/img/stimulus_set/sponge.jpg","../static/img/stimulus_set/spoon.jpg","../static/img/stimulus_set/spraybottle01.jpg","../static/img/stimulus_set/stamp.jpg","../static/img/stimulus_set/stapler.jpg","../static/img/stimulus_set/stethescope.jpg","../static/img/stimulus_set/stool01.jpg","../static/img/stimulus_set/studiolight.jpg","../static/img/stimulus_set/suitcase.jpg","../static/img/stimulus_set/sunglasses02a.jpg","../static/img/stimulus_set/surfboard.jpg","../static/img/stimulus_set/swissarmyknife01a.jpg","../static/img/stimulus_set/tambourine.jpg","../static/img/stimulus_set/tape.jpg","../static/img/stimulus_set/taperuler.jpg","../static/img/stimulus_set/teapot.jpg","../static/img/stimulus_set/thermometer.jpg","../static/img/stimulus_set/threeholepunch03.jpg","../static/img/stimulus_set/tie02.jpg","../static/img/stimulus_set/tissues.jpg","../static/img/stimulus_set/toaster.jpg","../static/img/stimulus_set/toiletpaper01a.jpg","../static/img/stimulus_set/toothbrush.jpg","../static/img/stimulus_set/towelrack.jpg","../static/img/stimulus_set/towels.jpg","../static/img/stimulus_set/toyhockeystick02a.jpg","../static/img/stimulus_set/travelmug.jpg","../static/img/stimulus_set/tripod.jpg","../static/img/stimulus_set/trumpet.jpg","../static/img/stimulus_set/typewriter.jpg","../static/img/stimulus_set/umbrella04.jpg","../static/img/stimulus_set/usbkey.jpg","../static/img/stimulus_set/vase.jpg","../static/img/stimulus_set/video_camera.jpg","../static/img/stimulus_set/wagon.jpg","../static/img/stimulus_set/wagonwheel.jpg","../static/img/stimulus_set/wallet.jpg","../static/img/stimulus_set/watch.jpg","../static/img/stimulus_set/water_bottle.jpg","../static/img/stimulus_set/wateringcan.jpg","../static/img/stimulus_set/whitehat.jpg","../static/img/stimulus_set/wineglass01.jpg","../static/img/stimulus_set/wrench.jpg","../static/img/stimulus_set/yarn.jpg",
-  ];
-
-  stimulus_set_images = jsPsych.randomization.shuffle(stimulus_set_images);
+  // ── Emoji stimulus sets (replaces JPG stimulus_set_images) ──
+  var stimulus_set_images = jsPsych.randomization.shuffle(EMOJI_STIMULUS_POOL.slice());
+  var practice_stimulus_images = PRACTICE_EMOJI.slice();
 
   if (DEV_MODE && DEV_NTRIALS > 0) {
     var _devSubsetSize = Math.max(DEV_NTRIALS * 4, 50);
     if (stimulus_set_images.length > _devSubsetSize) {
       stimulus_set_images = stimulus_set_images.slice(0, _devSubsetSize);
-      console.log('[DEV] Restricted stimulus_set_images to ' + _devSubsetSize + ' items');
+      console.log('[DEV] Restricted stimulus_set to ' + _devSubsetSize + ' items');
     }
   }
-
-  const sky_background = '../static/img/task_assets/shared/sky.png';
-  const block_land_backgrounds = [
-    '../static/img/task_assets/reward/layer_reward_highVol.png',
-    '../static/img/task_assets/reward/layer_reward_lowVol.png',
-    '../static/img/task_assets/loss/layer_loss_highVol.png',
-    '../static/img/task_assets/loss/layer_loss_lowVol.png'
-  ];
-  const practice_land_background = '../static/img/task_assets/shared/practice_land_background.png';
-  window.sky_background = sky_background;
 
   var make_trials = function(practice_no, randomized) {
     var num_trials = 10;
@@ -139,31 +125,49 @@
     }
 
     if (practice_no == 1) {
-        is_moving_practice = true; show_missing = true; show_bird = false;
-        missed_threshold = 10; num_trials = 1; randomized = [0];
+      is_moving_practice = true;
+      show_missing = true;
+      show_bird = false;
+      missed_threshold = 10;
+      num_trials = 1;
+      randomized = [0];
     } else if (practice_no == 2 || practice_no == 3) {
-        num_trials = 3; missed_threshold = 2; randomized = [0];
+      num_trials = 3;
+      missed_threshold = 2;
+      randomized = [0];
     } else if (practice_no == 4) {
-        show_bird = false; randomized = [0];
+      show_bird = false;
+      randomized = [0];
     } else if (practice_no == 5) {
-        num_trials = 3; show_bird = false; randomized = [0];
+      num_trials = 3;
+      show_bird = false;
+      randomized = [0];
     } else if (practice_no == 0) {
-        num_birds = 4; show_bird = false; bird_trial = true;
-        missed_threshold = 20; warning_threshold = 16; num_trials = 50;
-        bag_position = main_bag_position; bird_position = main_bird_position;
-        if (DEV_MODE && DEV_NTRIALS > 0) {
-          num_trials = Math.min(num_trials, DEV_NTRIALS);
-          console.log('[DEV] Capping main block trials to ' + num_trials);
-        }
+      num_birds = 4;
+      show_bird = false;
+      bird_trial = true;
+      missed_threshold = 20;
+      warning_threshold = 16;
+      num_trials = 50;
+      bag_position = main_bag_position;
+      bird_position = main_bird_position;
+
+      if (DEV_MODE && DEV_NTRIALS > 0) {
+        num_trials = Math.min(num_trials, DEV_NTRIALS);
+        console.log('[DEV] Capping main block trials to ' + num_trials);
+      }
     }
 
     var stayed_threshold = 4;
+
+    // Block-intro drone images (kept for the "new drone" announcement screen)
     var birds = [
       "../static/img/task_assets/reward/drone1.png",
       "../static/img/task_assets/reward/drone2.png",
       "../static/img/task_assets/reward/drone3.png",
       "../static/img/task_assets/reward/drone4.png"
     ];
+
     var trials = [];
     var missed_responses = 0;
     var total_missed_responses = 0;
@@ -173,101 +177,164 @@
     var stayed = 0;
 
     for (var j = 0; j < num_birds; j++) {
-        if (bird_trial) {
-            trials.push({ type: 'image-keyboard-response', prompt: '<p>A new drone and wind condition! Press use the arrow keys or the space bar to begin (auto in 20s)</p>', choices: [32, 37, 39], trial_duration: 20000, timeline: [{ stimulus: birds[randomized[j]] }] });
-            trials.push({ type: 'image-keyboard-response', prompt: '<p>Beginning...</p>', choices: jsPsych.NO_KEYS, trial_duration: 3000, timeline: [{ stimulus: birds[randomized[j]] }] });
+      if (bird_trial) {
+        trials.push({
+          type: 'image-keyboard-response',
+          stimulus_width: 200,
+          maintain_aspect_ratio: true,
+          prompt: '<p>A new drone and wind condition! Press the arrow keys or the space bar to begin (auto in 20s)</p>',
+          choices: [32, 37, 39],
+          trial_duration: 20000,
+          timeline: [{ stimulus: birds[randomized[j]] }]
+        });
+
+        trials.push({
+          type: 'image-keyboard-response',
+          prompt: '<p>Beginning...</p>',
+          stimulus_width: 200,
+          maintain_aspect_ratio: true,
+          choices: jsPsych.NO_KEYS,
+          trial_duration: 3000,
+          timeline: [{ stimulus: birds[randomized[j]] }]
+        });
+      }
+
+      for (var i = 0; i < num_trials; i++) {
+        var idx = k % coins_duration.length;
+        var cdur = Array.isArray(coins_duration[idx]) ? coins_duration[idx].slice() : coins_duration.slice();
+        var cdist = Array.isArray(coins_distribution[idx]) ? coins_distribution[idx].slice() : coins_distribution.slice();
+
+        // Emoji stimulus instead of image path
+        var stim_img;
+        if (practice_no >= 1 && practice_no <= 5) {
+          stim_img = practice_stimulus_images[k % practice_stimulus_images.length];
+        } else {
+          stim_img = stimulus_set_images[k % stimulus_set_images.length];
         }
 
-        for (var i = 0; i < num_trials; i++) {
-            var idx = k % coins_duration.length;
-            var cdur = Array.isArray(coins_duration[idx]) ? coins_duration[idx].slice() : coins_duration.slice();
-            var cdist = Array.isArray(coins_distribution[idx]) ? coins_distribution[idx].slice() : coins_distribution.slice();
-            var stim_img;
-            if (practice_no >= 1 && practice_no <= 5) {
-                stim_img = practice_stimulus_images[k % practice_stimulus_images.length];
-            } else {
-                stim_img = stimulus_set_images[k % stimulus_set_images.length];
+        const trial_te = {
+          type: 'trial',
+          data: {
+            block: j + 1,
+            randomized: randomized[j],
+            trial: i + 1,
+            stim_img: stim_img
+          },
+          true_vol_param: (practice_no === 0 ? factors_vol[j] : null),
+          true_stc_param: (practice_no === 0 ? factors_stc[j] : null),
+          vol_level: (practice_no === 0 ? (factors_vol[j] === 49 ? "high" : "low") : null),
+          stc_level: (practice_no === 0 ? (factors_stc[j] === 64 ? "high" : "low") : null),
+          valence: (practice_no === 0 ? factors_valence[j] : 'reward'),
+          stim_img: stim_img,
+          block_index: (practice_no === 0 ? j : -1),
+          coins_duration: cdur,
+          coins_distribution: cdist,
+          bag_position: bag_position[randomized[j]][i],
+          bird_position: bird_position[randomized[j]][i],
+          show_bird: show_bird,
+          is_moving_practice: is_moving_practice,
+          missing_msg_warning_number: warning_threshold,
+          hide_stimulus: hideStimulus,
+          on_start: function(trial) {
+            trial.bucket_position = bucket;
+            trial.show_missing = show_missing;
+            trial.strong_warning = strong_warning;
+          },
+          on_finish: function(data) {
+            var dat = jsPsych.data.getLastTrialData().values()[0];
+            var current_coins_caught = dat.coins_caught;
+
+            if (prev_block !== null && dat.block !== prev_block) {
+              missed_responses = 0;
+              prev_coins_caught = null;
             }
 
-            // ── CHANGES B & C: added valence, fixed vol/stc mapping ──
-            const trial_te = {
-                type: 'trial',
-                data: { block: j + 1, randomized: randomized[j], trial: i + 1, stim_img: stim_img },
-                true_vol_param: (practice_no === 0 ? factors_vol[j] : null),
-                true_stc_param: (practice_no === 0 ? factors_stc[j] : null),
-                vol_level: (practice_no === 0 ? (factors_vol[j] === 49 ? "high" : "low") : null),
-                stc_level: (practice_no === 0 ? (factors_stc[j] === 64 ? "high" : "low") : null),
-                valence: (practice_no === 0 ? factors_valence[j] : 'reward'),
-                stim_img: stim_img,
-                background_img: sky_background,
-                land_img: (practice_no === 0 ? block_land_backgrounds[j % block_land_backgrounds.length] : practice_land_background),
-                coins_duration: cdur,
-                coins_distribution: cdist,
-                bag_position: bag_position[randomized[j]][i],
-                bird_position: bird_position[randomized[j]][i],
-                show_bird: show_bird,
-                is_moving_practice: is_moving_practice,
-                missing_msg_warning_number: warning_threshold,
-                hide_stimulus: hideStimulus,
-                on_start: function(trial) { trial.bucket_position = bucket; trial.show_missing = show_missing; trial.strong_warning = strong_warning; },
-                on_finish: function(data) {
-                    var dat = jsPsych.data.getLastTrialData().values()[0];
-                    var current_coins_caught = dat.coins_caught;
-                    if (prev_block !== null && dat.block !== prev_block) { missed_responses = 0; prev_coins_caught = null; }
-                    prev_block = dat.block;
-                    bucket = dat.bucket_position;
-                    if (dat.trial == num_trials) bucket = 50;
-                    stayed = stayed + dat.stayed;
-                    show_missing = false;
-                    if (stayed == stayed_threshold) {
-                        stayed = 0; show_missing = true;
-                        if (current_coins_caught !== 10 && prev_coins_caught !== 10) { missed_responses++; total_missed_responses++; }
-                        if (total_missed_responses >= warning_threshold) { strong_warning = true; }
-                        if (total_missed_responses >= missed_threshold) { low_quality = true; jsPsych.endExperiment(); }
-                    }
-                    prev_coins_caught = current_coins_caught;
-                }
-            };
-            trials.push({ timeline: [trial_te], loop_function: function(data) { return data.values()[0].missing; } });
-            k++;
-        }
+            prev_block = dat.block;
+            bucket = dat.bucket_position;
+
+            if (dat.trial == num_trials) bucket = 50;
+
+            stayed = stayed + dat.stayed;
+            show_missing = false;
+
+            if (stayed == stayed_threshold) {
+              stayed = 0;
+              show_missing = true;
+
+              if (current_coins_caught !== 10 && prev_coins_caught !== 10) {
+                missed_responses++;
+                total_missed_responses++;
+              }
+
+              if (total_missed_responses >= warning_threshold) {
+                strong_warning = true;
+              }
+
+              if (total_missed_responses >= missed_threshold) {
+                low_quality = true;
+                jsPsych.endExperiment();
+              }
+            }
+
+            prev_coins_caught = current_coins_caught;
+          }
+        };
+
+        trials.push({
+          timeline: [trial_te],
+          loop_function: function(data) {
+            return data.values()[0].missing;
+          }
+        });
+
+        k++;
+      }
     }
+
     return trials;
   };
 
-  var practice1_core = make_trials(1,randomized);
-  var practice2 = make_trials(2,randomized);
-  var practice3 = make_trials(3,randomized);
-  var practice4 = make_trials(4,randomized);
-  var practice5 = make_trials(5,randomized);
-  var trials = make_trials(0,randomized);
+  var practice1_core = make_trials(1, randomized);
+  var practice2 = make_trials(2, randomized);
+  var practice3 = make_trials(3, randomized);
+  var practice4 = make_trials(4, randomized);
+  var practice5 = make_trials(5, randomized);
+  var trials = make_trials(0, randomized);
 
-  // ── CHANGE E: updated memory intro text ──
   function create_memory_timeline(blockNum) {
     var timeline = [];
-    var pairCount = (typeof PREDEFINED_PAIRS !== 'undefined' && Array.isArray(PREDEFINED_PAIRS)) ? PREDEFINED_PAIRS.length : 0;
+    var pairCount = (typeof PREDEFINED_PAIRS !== 'undefined' && Array.isArray(PREDEFINED_PAIRS))
+      ? PREDEFINED_PAIRS.length
+      : 0;
+
     timeline.push({
       type: 'html-keyboard-response',
       stimulus: '<p style="font-size:24px; text-align:center;">For each pair of items presented, first select the item that you believe was displayed first during the game.<br><br>Next, indicate how many items you believe were shown in between the pair.<br><br>On some trials, you will also place the middle item on a slider relative to its neighboring items.<br><br>Press the space bar or arrow key to continue.</p>',
       choices: [32, 37, 38, 39, 40],
       trial_duration: 15000
     });
+
     for (var p = 0; p < pairCount; p++) {
-      timeline.push({ type: 'memory-task', pair_index: p + 1, block_num: blockNum });
+      timeline.push({
+        type: 'memory-task',
+        pair_index: p + 1,
+        block_num: blockNum
+      });
     }
+
     return timeline;
   }
 
-  // ── CHANGE D: fixed seedFakeBirdData ──
   function seedFakeBirdData(blockNum, numTrials) {
     numTrials = numTrials || 50;
     var fakeImgs = stimulus_set_images.slice(0, numTrials);
-    // Seed block-level parameters including valence
+
     jsPsych.data.write({
       true_vol: factors_vol,
       true_stc: factors_stc,
       true_valence: factors_valence
     });
+
     for (var i = 0; i < numTrials; i++) {
       jsPsych.data.write({
         trial_type: 'trial',
@@ -279,49 +346,131 @@
         valence: factors_valence[blockNum - 1]
       });
     }
+
     console.log('[DEV] Seeded ' + numTrials + ' fake trials for block ' + blockNum);
   }
 
-  var practice_check_core = { type: 'call-function', func: function(){}, on_finish: function(trial) { low_quality = true; jsPsych.endExperiment(); } };
-  var practice1_check = { timeline: [inst3_incorrect, practice_check_core], conditional_function: function(){ var data = jsPsych.data.get().last(1).values()[0]; return data.stayed !== 0; } };
-  var practice1_loop = { timeline: practice1_core, conditional_function: function(){ var data = jsPsych.data.get().last(1).values()[0]; return data.stayed !== 0; } };
+  var practice_check_core = {
+    type: 'call-function',
+    func: function() {},
+    on_finish: function(trial) {
+      low_quality = true;
+      jsPsych.endExperiment();
+    }
+  };
+
+  var practice1_check = {
+    timeline: [inst3_incorrect, practice_check_core],
+    conditional_function: function() {
+      var data = jsPsych.data.get().last(1).values()[0];
+      return data.stayed !== 0;
+    }
+  };
+
+  var practice1_loop = {
+    timeline: practice1_core,
+    conditional_function: function() {
+      var data = jsPsych.data.get().last(1).values()[0];
+      return data.stayed !== 0;
+    }
+  };
+
   var practice1 = [];
   practice1 = practice1.concat(practice1_core);
   practice1 = practice1.concat(practice1_loop);
   practice1 = practice1.concat(practice1_check);
 
   var low_quality = false;
+
   var comprehension1_loop_timeline = [inst_summary];
   comprehension1_loop_timeline = comprehension1_loop_timeline.concat(comprehension1);
-  var comprehension1_loop = { timeline: comprehension1_loop_timeline, conditional_function: function(){ var data = jsPsych.data.get().last(1).values()[0]; return data.num_errors !== 0; } };
 
-  var comprehension_check_core = { type: 'call-function', func: function(){}, on_finish: function(trial) { low_quality = true; jsPsych.endExperiment(); } };
-  var terminate = { type: 'termination', show_clickable_nav: true, button_label_previous: "Prev", button_label_next: "Next", on_start: function(trial) { var data = jsPsych.data.getLastTrialData().values()[0]; var correctness = data.correctness_responses; trial.incorrect = correctness.findIndex(element => element == 0) + 1; } };
-  var comprehension_check = { timeline: [terminate, comprehension_check_core], conditional_function: function(){ var data = jsPsych.data.get().last(1).values()[0]; return data.num_errors !== 0; } };
+  var comprehension1_loop = {
+    timeline: comprehension1_loop_timeline,
+    conditional_function: function() {
+      var data = jsPsych.data.get().last(1).values()[0];
+      return data.num_errors !== 0;
+    }
+  };
 
-  // Wrap instructions for smooth transitions
+  var comprehension_check_core = {
+    type: 'call-function',
+    func: function() {},
+    on_finish: function(trial) {
+      low_quality = true;
+      jsPsych.endExperiment();
+    }
+  };
+
+  var terminate = {
+    type: 'termination',
+    show_clickable_nav: true,
+    button_label_previous: "Prev",
+    button_label_next: "Next",
+    on_start: function(trial) {
+      var data = jsPsych.data.getLastTrialData().values()[0];
+      var correctness = data.correctness_responses;
+      trial.incorrect = correctness.findIndex(function(element) {
+        return element == 0;
+      }) + 1;
+    }
+  };
+
+  var comprehension_check = {
+    timeline: [terminate, comprehension_check_core],
+    conditional_function: function() {
+      var data = jsPsych.data.get().last(1).values()[0];
+      return data.num_errors !== 0;
+    }
+  };
+
   function addSmoothTransitions(node) {
     if (!node || node.type !== 'instructions') return node;
+
     var originalOnStart = node.on_start;
     var originalOnLoad = node.on_load;
+
     node.on_start = function(trial) {
       var display = document.querySelector('.jspsych-display-element');
       if (display) display.classList.add('transitioning');
       if (typeof originalOnStart === 'function') originalOnStart.call(this, trial);
     };
+
     node.on_load = function() {
       var display = document.querySelector('.jspsych-display-element');
-      if (!display) { if (typeof originalOnLoad === 'function') originalOnLoad.call(this); return; }
+
+      if (!display) {
+        if (typeof originalOnLoad === 'function') originalOnLoad.call(this);
+        return;
+      }
+
       var imgs = Array.from(display.querySelectorAll('img'));
+
       Promise.all(imgs.map(function(img) {
-        if (img.complete && img.naturalWidth > 0) return (typeof img.decode === 'function') ? img.decode().catch(function(){}) : Promise.resolve();
+        if (img.complete && img.naturalWidth > 0) {
+          return (typeof img.decode === 'function')
+            ? img.decode().catch(function() {})
+            : Promise.resolve();
+        }
+
         return new Promise(function(resolve) {
-          img.addEventListener('load', function() { if (typeof img.decode === 'function') { img.decode().catch(function(){}).finally(resolve); } else { resolve(); } }, { once: true });
+          img.addEventListener('load', function() {
+            if (typeof img.decode === 'function') {
+              img.decode().catch(function() {}).finally(resolve);
+            } else {
+              resolve();
+            }
+          }, { once: true });
+
           img.addEventListener('error', resolve, { once: true });
         });
-      })).finally(function() { display.classList.remove('transitioning'); });
+      })).finally(function() {
+        display.classList.remove('transitioning');
+      });
+
       if (typeof originalOnLoad === 'function') originalOnLoad.call(this);
     };
+
     return node;
   }
 
@@ -343,97 +492,98 @@
   instructions_loop = instructions_loop.concat(comprehension_check);
   instructions_loop = instructions_loop.concat(ready);
 
-  var feedback0 = { type: 'instructions', pages: ['<p style="font-size:20px"<br><br>You will now see the instructions for the task. <br><br>Please pay attention to the instructions and complete the comprehension check, otherwise the task may be terminated. <br><br>A <b>bonus</b> payment will be processed based on your performance. </p>'], show_clickable_nav: true, button_label_previous: "Prev", button_label_next: "Next" };
-  var feedback1 = { type: 'instructions', pages: ['<p style="font-size:20px">Thank you for completing the game. You may now exit.<br><br> </p>'], show_clickable_nav: true, button_label_previous: "Prev", button_label_next: "Next" };
-  var finish = { type: 'instructions', show_clickable_nav: true, button_label_next: "Finish" };
+  var feedback0 = {
+    type: 'instructions',
+    pages: [
+      '<p style="font-size:20px"><br><br>You will now see the instructions for the task. <br><br>Please pay attention to the instructions and complete the comprehension check, otherwise the task may be terminated. <br><br>A <b>bonus</b> payment will be processed based on your performance. </p>'
+    ],
+    show_clickable_nav: true,
+    button_label_previous: "Prev",
+    button_label_next: "Next"
+  };
 
-preload_images = [
-  '../static/img/task_assets/shared/sky.png',
-  '../static/img/task_assets/shared/practice_land_background.png',
-  '../static/img/task_assets/shared/bucket1.png',
-  '../static/img/task_assets/shared/bucket2.png',
+  var feedback1 = {
+    type: 'instructions',
+    pages: [
+      '<p style="font-size:20px">Thank you for completing the game. You may now exit.<br><br> </p>'
+    ],
+    show_clickable_nav: true,
+    button_label_previous: "Prev",
+    button_label_next: "Next"
+  };
 
-  '../static/img/task_assets/reward/drone0.png',
-  '../static/img/task_assets/reward/drone1.png',
-  '../static/img/task_assets/reward/drone2.png',
-  '../static/img/task_assets/reward/drone3.png',
-  '../static/img/task_assets/reward/drone4.png',
-  '../static/img/task_assets/reward/supply-bag.png',
-  '../static/img/task_assets/reward/supply-dot.png',
-  '../static/img/task_assets/reward/layer_reward_highVol.png',
-  '../static/img/task_assets/reward/layer_reward_lowVol.png',
+  var finish = {
+    type: 'instructions',
+    show_clickable_nav: true,
+    button_label_next: "Finish"
+  };
 
+  // Minimal preload — only the drone images used in block-intro and instruction screens
+  var preload_images = [
+    '../static/img/task_assets/reward/drone0.png',
+    '../static/img/task_assets/reward/drone1.png',
+    '../static/img/task_assets/reward/drone2.png',
+    '../static/img/task_assets/reward/drone3.png',
+    '../static/img/task_assets/reward/drone4.png',
+  ];
 
-  '../static/img/task_assets/loss/drone0.png',
-  '../static/img/task_assets/loss/hazard-bag.png',
-  '../static/img/task_assets/loss/hazard-dot.png',
-  '../static/img/task_assets/loss/layer_loss_highVol.png',
-  '../static/img/task_assets/loss/layer_loss_lowVol.png',
+  var feedback_p1 = {
+    type: 'instructions',
+    pages: ['<p style="font-size:20px"><br><br>Nice job, keep it up! (1/3 completed)'],
+    show_clickable_nav: true,
+    button_label_previous: "Prev",
+    button_label_next: "Next"
+  };
 
-  '../static/img/task_assets/practice/apple.jpg',
-  '../static/img/task_assets/practice/banana.jpg',
-  '../static/img/task_assets/practice/blueberry.jpg'
-];
+  var feedback_p2 = {
+    type: 'instructions',
+    pages: ['<p style="font-size:20px"><br><br>Keep paying attention, you are doing great! (2/3 completed)'],
+    show_clickable_nav: true,
+    button_label_previous: "Prev",
+    button_label_next: "Next"
+  };
 
-  async function warmImageCache(imagePaths) {
-    var uniquePaths = Array.from(new Set(imagePaths || []));
-    await Promise.all(uniquePaths.map(function(src) {
-      return new Promise(function(resolve) {
-        var img = new Image();
-        img.onload = function() { if (typeof img.decode === 'function') { img.decode().catch(function(){}).finally(resolve); } else { resolve(); } };
-        img.onerror = function() { resolve(); };
-        img.src = src;
-      });
-    }));
-  }
+  var attentionCheckFailPage = {
+    type: 'instructions',
+    pages: ['<br><br>It seems like there were issues with your responses to the attention check question. <br><br>Please make sure to read and answer carefully.'],
+    show_clickable_nav: true,
+    button_label_next: "Continue"
+  };
 
-  function pinImagesOffscreen(imagePaths) {
-    var uniquePaths = Array.from(new Set(imagePaths || []));
-    var holder = document.createElement('div');
-    holder.id = 'img-pin-cache'; holder.setAttribute('aria-hidden', 'true');
-    holder.style.cssText = 'position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;';
-    uniquePaths.forEach(function(src) { var img = new Image(); img.src = src; img.loading = 'eager'; img.decoding = 'sync'; img.width = 2; img.height = 2; holder.appendChild(img); });
-    document.body.appendChild(holder);
-    window.__imgPinCache = holder;
-  }
+  var attentionCheck = {
+    timeline: [attentionCheckFailPage],
+    conditional_function: function() {
+      var attentionCheckData = jsPsych.data.getLastTrialData().values()[0]['infrequency'];
+      if (attentionCheckData !== 0) {
+        failedAttentionChecksCount++;
+        return failedAttentionChecksCount <= 3;
+      }
+      return false;
+    }
+  };
 
-  async function localizeInstructionImageSources(imagePaths) {
-    var uniquePaths = Array.from(new Set(imagePaths || []));
-    var urlMap = {};
-    await Promise.all(uniquePaths.map(async function(src) {
-      try { var res = await fetch(src, { cache: 'force-cache' }); var blob = await res.blob(); urlMap[src] = URL.createObjectURL(blob); } catch (e) { urlMap[src] = src; }
-    }));
-    var instructionNodes = [inst_summary, inst1, inst2, inst3, inst4, inst5, inst6, inst7, feedback0, feedback1, ready, quiz];
-    instructionNodes.forEach(function(node) {
-      if (!node || !Array.isArray(node.pages)) return;
-      node.pages = node.pages.map(function(html) { var next = html; uniquePaths.forEach(function(src) { next = next.split(src).join(urlMap[src] || src); }); return next; });
-    });
-    window.__instructionBlobUrls = Object.values(urlMap).filter(function(u) { return u && u.startsWith('blob:'); });
-  }
-
-  var feedback_p1 = { type: 'instructions', pages: ['<p style="font-size:20px"<br><br>Nice job, keep it up! (1/3 completed)'], show_clickable_nav: true, button_label_previous: "Prev", button_label_next: "Next" };
-  var feedback_p2 = { type: 'instructions', pages: ['<p style="font-size:20px"<br><br>Keep paying attention, you are doing great! (2/3 completed)'], show_clickable_nav: true, button_label_previous: "Prev", button_label_next: "Next" };
-
-  var attentionCheckFailPage = { type: 'instructions', pages: ['<br><br>It seems like there were issues with your responses to the attention check question. <br><br>Please make sure to read and answer carefully.'], show_clickable_nav: true, button_label_next: "Continue" };
-  var attentionCheck = { timeline: [attentionCheckFailPage], conditional_function: function () { var attentionCheckData = jsPsych.data.getLastTrialData().values()[0]['infrequency']; if (attentionCheckData !== 0) { failedAttentionChecksCount++; return failedAttentionChecksCount <= 3; } return false; } };
-
-  var low_quality = false;
   var failedAttentionChecksCount = 0;
 
   (async function() {
-    var survey_demographics = { type: 'survey-demo', button_label: 'Continue' };
+    var survey_demographics = {
+      type: 'survey-demo',
+      button_label: 'Continue'
+    };
 
     function buildBirdMemoryTrials() {
       var num_blocks = randomized.length;
       if (num_blocks === 0) return trials;
+
       var block_length = Math.floor(trials.length / num_blocks);
       var new_trials = [];
+
       for (var b = 0; b < num_blocks; b++) {
         var start_idx = b * block_length;
         var end_idx = start_idx + block_length;
         new_trials = new_trials.concat(trials.slice(start_idx, end_idx));
         new_trials = new_trials.concat(create_memory_timeline(b + 1));
       }
+
       return new_trials;
     }
 
@@ -442,32 +592,64 @@ preload_images = [
     if (DEV_MODE && DEV_STAGE === 'instructions') {
       console.log('[DEV] Stage: instructions only');
       timeline = timeline.concat(welcome, feedback0, instructions_loop);
-      timeline.push({ type: 'html-keyboard-response', stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Instructions stage complete. Press any key to finish.</p>', choices: jsPsych.ALL_KEYS });
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Instructions stage complete. Press any key to finish.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
     } else if (DEV_MODE && DEV_STAGE === 'bird') {
       console.log('[DEV] Stage: drone only');
-      timeline.push({ type: 'html-keyboard-response', stimulus: '<p><strong>[DEV]</strong> Drone task only. Press any key to start.</p>', choices: jsPsych.ALL_KEYS });
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p><strong>[DEV]</strong> Drone task only. Press any key to start.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
       timeline = timeline.concat(trials);
-      timeline.push({ type: 'html-keyboard-response', stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Bird stage complete. Press any key to finish.</p>', choices: jsPsych.ALL_KEYS });
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Bird stage complete. Press any key to finish.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
     } else if (DEV_MODE && DEV_STAGE === 'memory') {
       console.log('[DEV] Stage: memory only, block=' + DEV_BLOCK);
-      timeline.push({ type: 'html-keyboard-response', stimulus: '<p><strong>[DEV]</strong> Memory task only (block ' + DEV_BLOCK + '). Press any key to start.</p>', choices: jsPsych.ALL_KEYS });
-      timeline.push({ type: 'call-function', func: function() { seedFakeBirdData(DEV_BLOCK, 50); } });
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p><strong>[DEV]</strong> Memory task only (block ' + DEV_BLOCK + '). Press any key to start.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
+      timeline.push({
+        type: 'call-function',
+        func: function() {
+          seedFakeBirdData(DEV_BLOCK, 50);
+        }
+      });
       timeline = timeline.concat(create_memory_timeline(DEV_BLOCK));
-      timeline.push({ type: 'html-keyboard-response', stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Memory stage complete. Press any key to finish.</p>', choices: jsPsych.ALL_KEYS });
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV]</strong> Memory stage complete. Press any key to finish.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
     } else if (DEV_MODE && DEV_STAGE === 'termination') {
       console.log('[DEV] Stage: termination');
-      timeline.push({ type: 'html-keyboard-response', stimulus: '<p style="font-size:24px;"><strong>[DEV] Termination Screen</strong></p><p style="font-size:16px; color:#d9534f; margin-top:30px;">The game has been terminated.</p><p style="font-size:14px; color:#555; margin-top:20px;">Press any key to end.</p>', choices: jsPsych.ALL_KEYS });
+      timeline.push({
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:24px;"><strong>[DEV] Termination Screen</strong></p><p style="font-size:16px; color:#d9534f; margin-top:30px;">The game has been terminated.</p><p style="font-size:14px; color:#555; margin-top:20px;">Press any key to end.</p>',
+        choices: jsPsych.ALL_KEYS
+      });
     } else {
-      if (DEV_MODE) console.log('[DEV] Stage: full experiment' + (DEV_NTRIALS > 0 ? ' (ntrials=' + DEV_NTRIALS + ')' : ''));
+      if (DEV_MODE) {
+        console.log('[DEV] Stage: full experiment' + (DEV_NTRIALS > 0 ? ' (ntrials=' + DEV_NTRIALS + ')' : ''));
+      }
       var combinedTrials = buildBirdMemoryTrials();
-      timeline = timeline.concat(welcome, feedback0, instructions_loop, combinedTrials, survey_demographics, feedback1, finish);
-    }
-
-    if (!DEV_MODE || DEV_STAGE === 'full' || DEV_STAGE === 'instructions') {
-      await warmImageCache(preload_images);
-      var instructionJpgs = ['../static/img/imga1.jpg','../static/img/imga2.jpg','../static/img/imgb1.jpg','../static/img/imgb2.jpg','../static/img/imgb3.jpg','../static/img/imgc1.jpg','../static/img/imgc2.jpg','../static/img/imgc3.jpg','../static/img/imgd1.jpg','../static/img/imgd2.jpg','../static/img/imgd3.jpg','../static/img/imge1.jpg'];
-      pinImagesOffscreen(instructionJpgs);
-      await localizeInstructionImageSources(instructionJpgs);
+      timeline = timeline.concat(
+        welcome,
+        feedback0,
+        instructions_loop,
+        combinedTrials,
+        survey_demographics,
+        feedback1,
+        finish
+      );
     }
 
     jsPsych.init({
@@ -478,6 +660,7 @@ preload_images = [
         window.removeEventListener("beforeunload", verify_unload);
         var interaction_data = jsPsych.data.getInteractionData();
         jsPsych.data.get().addToLast({ interactions: interaction_data.json() });
+
         if (low_quality) {
           redirect_reject("{{workerId}}", "{{assignmentId}}", "{{hitId}}", "{{code_reject}}");
         } else {
@@ -486,6 +669,5 @@ preload_images = [
       }
     });
   })();
-
 </script>
 </html>

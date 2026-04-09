@@ -1,20 +1,164 @@
-// instructions.js
+// instructions.js — Revised for skimmability + incremental visual mock-ups
 
 var instructions = [];
 const style1 = "font-size:20px";
 
-const INSTR_IMG = {
-  intro_task: "../static/img/task_assets/reward/drone0.png",
-  intro_controls: "../static/img/task_assets/shared/bucket1.png",
-  memory_example: "../static/img/task_assets/practice/apple.jpg",
-  reward_example: "../static/img/task_assets/reward/supply-bag.png",
-  loss_example: "../static/img/task_assets/loss/hazard-bag.png"
-};
+// ---------------------------------------------------------------------
+// Reusable HTML mock-ups styled to resemble the real task
+// ---------------------------------------------------------------------
+
+function mockGameFrame(inner, extraStyle) {
+  return (
+    '<div style="' +
+      'width:78%;max-width:760px;margin:18px auto 10px auto;padding:18px 16px 20px 16px;' +
+      'border-radius:16px;overflow:hidden;position:relative;' +
+      'background:linear-gradient(to bottom,' +
+        'hsl(210,38%,18%) 0%,' +
+        'hsl(210,38%,28%) 30%,' +
+        'hsl(210,38%,42%) 55%,' +
+        'hsl(210,44%,58%) 72%,' +
+        'hsl(210,48%,72%) 85%,' +
+        'hsl(210,46%,80%) 100%);' +
+      'box-shadow:0 12px 30px rgba(0,0,0,.28);' +
+      'border:2px solid rgba(255,255,255,.08);' +
+      (extraStyle || '') +
+    '">' +
+      '<div style="position:absolute;left:0;right:0;bottom:0;height:22%;' +
+        'background:linear-gradient(to bottom,hsl(210,46%,80%) 0%,hsl(210,42%,74%) 100%);' +
+        'border-top:1px solid rgba(255,255,255,.2);"></div>' +
+      '<div style="position:relative;z-index:2;">' + inner + '</div>' +
+    '</div>'
+  );
+}
+
+function mockRail(boxLeftPct, dotLeftPct, opts) {
+  opts = opts || {};
+
+  var boxLocked = !!opts.boxLocked;
+  var showRail = (typeof opts.showRail === 'undefined') ? true : !!opts.showRail;
+  var showDot = !!opts.showDot;
+  var showLine = !!opts.showLine;
+  var valence = opts.valence || 'reward';
+  var score = opts.score || '';
+  var showItem = !!opts.showItem;
+  var item = opts.item || '🧩';
+
+  var boxBg = boxLocked ? 'rgba(100,100,120,.72)' : 'rgba(255,255,255,.92)';
+  var boxBorder = boxLocked ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.62)';
+  var boxText = boxLocked ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.35)';
+  var dotBg = valence === 'loss'
+    ? 'radial-gradient(circle, hsl(0,65%,55%) 0%, hsl(0,50%,40%) 100%)'
+    : 'radial-gradient(circle, hsl(130,60%,55%) 0%, hsl(130,45%,38%) 100%)';
+  var lineColor = valence === 'loss' ? '#ff4444' : '#39ff14';
+  var scoreColor = valence === 'loss' ? '#ff4444' : '#39ff14';
+
+  return mockGameFrame(
+    '<div style="height:210px;position:relative;">' +
+
+      (showRail ? (
+        '<div style="position:absolute;left:8%;width:84%;height:3px;top:72%;' +
+          'transform:translateY(-50%);border-radius:999px;background:rgba(255,255,255,.55);' +
+          'box-shadow:0 0 8px rgba(255,255,255,.15);"></div>'
+      ) : '') +
+
+      (showLine ? (
+        '<div style="position:absolute;top:72%;height:2px;transform:translateY(-1px);' +
+          'left:' + Math.min(boxLeftPct, dotLeftPct) + '%;width:' + Math.abs(dotLeftPct - boxLeftPct) + '%;' +
+          'opacity:.8;background:repeating-linear-gradient(90deg,' + lineColor + ' 0 4px, transparent 4px 8px);"></div>'
+      ) : '') +
+
+      (showDot ? (
+        '<div style="position:absolute;left:' + dotLeftPct + '%;top:72%;transform:translate(-50%,-50%);' +
+          'width:30px;height:30px;border-radius:50%;background:' + dotBg + ';' +
+          'border:2px solid rgba(255,255,255,.5);box-shadow:0 0 12px rgba(255,255,255,.2),0 3px 8px rgba(0,0,0,.35);"></div>'
+      ) : '') +
+
+      (score ? (
+        '<div style="position:absolute;left:' + dotLeftPct + '%;top:48%;transform:translateX(-50%);' +
+          'font-size:30px;font-weight:800;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;' +
+          'color:' + scoreColor + ';text-shadow:0 2px 10px rgba(0,0,0,.45);">' + score + '</div>'
+      ) : '') +
+
+      (showItem ? (
+        '<div style="position:absolute;left:' + dotLeftPct + '%;top:22%;transform:translateX(-50%);' +
+          'width:94px;height:94px;border-radius:14px;background:rgba(255,255,255,.12);' +
+          'border:2px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;' +
+          'box-shadow:0 8px 24px rgba(0,0,0,.3);font-size:52px;line-height:1;">' + item + '</div>'
+      ) : '') +
+
+      '<div style="position:absolute;left:' + boxLeftPct + '%;top:72%;transform:translate(-50%,-50%);' +
+        'width:62px;height:36px;border-radius:7px;background:' + boxBg + ';border:2px solid ' + boxBorder + ';' +
+        'box-shadow:0 3px 10px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;">' +
+        '<span style="font-size:9px;font-weight:700;letter-spacing:1px;color:' + boxText + ';' +
+          'text-transform:uppercase;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;">YOU</span>' +
+      '</div>' +
+
+    '</div>'
+  );
+}
+
+function mockBrightDarkComparison() {
+  return (
+    '<div style="display:flex;gap:16px;justify-content:center;align-items:stretch;flex-wrap:wrap;margin:12px auto 4px auto;width:84%;">' +
+
+      '<div style="flex:1;min-width:240px;max-width:320px;padding:14px;border-radius:14px;' +
+        'background:#f7f8fb;border:1px solid #e3e6ef;box-shadow:0 4px 14px rgba(0,0,0,.06);">' +
+        '<div style="font-size:22px;font-weight:800;margin-bottom:10px;color:#1f2937;">Bright box</div>' +
+        '<div style="display:flex;justify-content:center;align-items:center;height:78px;">' +
+          '<div style="width:82px;height:42px;border-radius:8px;background:rgba(255,255,255,.95);' +
+            'border:2px solid rgba(180,180,180,.8);display:flex;align-items:center;justify-content:center;' +
+            'box-shadow:0 3px 12px rgba(0,0,0,.12);">' +
+            '<span style="font-size:10px;font-weight:800;letter-spacing:1px;color:#555;">YOU</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:18px;line-height:1.5;text-align:center;margin-top:8px;"><strong>Movable</strong></div>' +
+      '</div>' +
+
+      '<div style="flex:1;min-width:240px;max-width:320px;padding:14px;border-radius:14px;' +
+        'background:#f7f8fb;border:1px solid #e3e6ef;box-shadow:0 4px 14px rgba(0,0,0,.06);">' +
+        '<div style="font-size:22px;font-weight:800;margin-bottom:10px;color:#1f2937;">Dark box</div>' +
+        '<div style="display:flex;justify-content:center;align-items:center;height:78px;">' +
+          '<div style="width:82px;height:42px;border-radius:8px;background:rgba(100,100,120,.78);' +
+            'border:2px solid rgba(140,140,160,.45);display:flex;align-items:center;justify-content:center;' +
+            'box-shadow:0 3px 12px rgba(0,0,0,.12);">' +
+            '<span style="font-size:10px;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.45);">YOU</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:18px;line-height:1.5;text-align:center;margin-top:8px;"><strong>Locked / frozen</strong></div>' +
+      '</div>' +
+
+    '</div>'
+  );
+}
+
+function mockGainLossComparison() {
+  return (
+    '<div style="display:flex;gap:16px;justify-content:center;align-items:stretch;flex-wrap:wrap;margin:14px auto 4px auto;width:88%;">' +
+
+      '<div style="flex:1;min-width:250px;max-width:340px;padding:16px;border-radius:14px;' +
+        'background:#f7fff8;border:1px solid #d8efdc;box-shadow:0 4px 14px rgba(0,0,0,.06);text-align:center;">' +
+        '<div style="font-size:24px;font-weight:800;color:#0a7f2e;margin-bottom:8px;">GREEN environment</div>' +
+        '<div style="font-size:19px;line-height:1.6;"><strong>Better placement = gain more</strong></div>' +
+        '<div style="font-size:34px;font-weight:900;color:#0a7f2e;margin:10px 0 6px 0;">+10</div>' +
+        '<div style="font-size:18px;line-height:1.6;">Catching more adds points.</div>' +
+      '</div>' +
+
+      '<div style="flex:1;min-width:250px;max-width:340px;padding:16px;border-radius:14px;' +
+        'background:#fff8f8;border:1px solid #f0d7d7;box-shadow:0 4px 14px rgba(0,0,0,.06);text-align:center;">' +
+        '<div style="font-size:24px;font-weight:800;color:#b00020;margin-bottom:8px;">RED environment</div>' +
+        '<div style="font-size:19px;line-height:1.6;"><strong>Better placement = lose less</strong></div>' +
+        '<div style="font-size:34px;font-weight:900;color:#b00020;margin:10px 0 6px 0;">-4</div>' +
+        '<div style="font-size:18px;line-height:1.6;">Missing costs points.</div>' +
+      '</div>' +
+
+    '</div>'
+  );
+}
 
 var inst1_incorrect = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"><br><br> Some of your answers were incorrect. Some instructions will be repeated. Please pay attention!</p>',
+    '<div style="font-size:20px; line-height:1.6; text-align:center;"><br><br><strong style="font-size:24px; color:#b00020;">Some answers were incorrect.</strong><br><br>Some instructions will be repeated.<br><strong>Please pay close attention.</strong></div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -24,39 +168,51 @@ var inst1_incorrect = {
 var inst_summary = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> You did not answer all questions correctly. Some of the instructions will be repeated before you see the questions again. <br><br><br>Pay close attention!</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">You did not answer all questions correctly.</strong><br><br>Some instructions will now be repeated.<br><br><strong>Pay close attention to the key rules.</strong></div>',
 
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.intro_task + '" width="40%"></img> <br><br><br> In this game, drones drop supply bags onto the ground. Your goal is to position your collector to catch as many supplies as you can.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Goal of the game</strong><br><br>Drones drop supply bags onto the rail.<br>Your goal is to move your <strong>box</strong> to catch as many supplies as possible.</div>' +
+      mockRail(45, 58, { boxLocked: false, showDot: false, showLine: false, showItem: false }),
 
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.intro_controls + '" width="40%"></img> <br><br><br> You should use right and left arrow keys to move the collector.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Move the box</strong><br><br>Use the <strong>left</strong> and <strong>right arrow keys</strong> to move the white box labeled <strong>"YOU"</strong>.</div>',
 
-    '<p style="font-size:20px"> After you position the collector, the sky will darken slightly. At this time you can no longer move the collector.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">When you can move</strong><br><br>When the box is <strong>bright</strong>, you can move it.<br>When the box turns <strong>darker</strong>, it is <strong>locked</strong> and you cannot move it.</div>' +
+      mockBrightDarkComparison(),
 
-    '<p style="font-size:20px"> You will then see the drone dropping a supply bag.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Where the bag landed</strong><br><br>A <strong>colored circle</strong> will appear on the rail.<br>It shows where the bag landed.</div>' +
+      mockRail(41, 62, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', showItem: false }),
 
-    '<p style="font-size:20px"> The bag breaks open near the ground and the supplies scatter.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">A <strong>dashed line</strong> shows the distance between your box and the landing location.</div>' +
+      mockRail(41, 62, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', showItem: false }),
 
-    '<p style="font-size:20px"> Your score is determined by the number of items you catch in your collector.<br><br><br>If you align your collector perfectly, you will catch all ten items! Otherwise, you will catch fewer depending on how far off your collector is.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Your score</strong><br><br>A <strong>number</strong> will appear each turn.<br>That number is your score for that turn.</div>' +
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '+10', showItem: false }),
 
-    '<p style="font-size:20px"> A new turn begins when the screen lights up again. At this time you are once again able to move the collector.</p>',
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">How scoring works</strong><br><br>Your score depends on how close your <strong>box</strong> is to the <strong>colored circle</strong>.<br><br><strong style="font-size:24px; color:#0a7f2e;">Perfect alignment = +10</strong><br><br>The farther away your box is, the fewer points you get.</div>' +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
 
-    '<p style="font-size:20px"> If you do not move the collector on one or two turns, we assume you are happy with its position. <br><br> However, you should not leave the collector in one place for more than a few turns. If you do, we will warn you, and if you persist, we may have to end the game early!</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Next turn</strong><br><br>A new turn begins when the box becomes <strong>bright</strong> again.<br>That means you can move it again.</div>',
 
-    '<p style="font-size:20px"> The bag will fall near the drone, but the exact position will vary around the drone because of unpredictable winds!</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">Do not stop responding</strong><br><br>If you do not move the box for <strong>one or two turns</strong>, we assume you are satisfied with its position.<br><br>But do <strong>not</strong> leave it unchanged for too many turns.<br>You will be warned, and the game may end early.</div>',
 
-    '<p style="font-size:20px"> You may have noticed that the drone can also move unpredictably. The best prediction for its position on one turn is its position on the previous turn, but it may fly to a new location at any time.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Where the bag falls</strong><br><br>The bag falls <strong>near the drone</strong>, but not always in exactly the same place.<br>This is because of <strong>unpredictable wind</strong>.</div>',
 
-    '<p style="font-size:20px"><strong> Your best strategy is to position the collector directly under where you think the drone is located.</strong></p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">The drone also moves</strong><br><br>The drone can change position over time.<br>The best guess for where it is now is where it was on the previous turn,<br>but it may move to a new location.</div>',
 
-    '<p style="font-size:20px"> Remember though: in the real game, you cannot actually see the drone, only the supply bag that it drops!</p>',
+    '<div style="font-size:21px; line-height:1.8; text-align:center;"><strong style="font-size:26px;">Best strategy</strong><br><br><strong>Put the box directly under where you think the drone is.</strong></div>' +
+      mockRail(50, 54, { boxLocked: false, showDot: true, showLine: true, valence: 'reward', score: '', showItem: false }),
 
-    '<p style="font-size:20px"> Your movement of the collector is exactly the same as before — but you have to estimate where the drone is located based on where it has been.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Important change in the real game</strong><br><br>You will <strong>not</strong> see the drone.<br>You will only see the <strong>colored circle</strong> showing where the bag landed.</div>' +
+      mockRail(44, 57, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+6', showItem: false }),
 
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.memory_example + '" width="40%"></img> <br><br><br>You will also notice that in each turn, a distinct item will appear where the supplies land. <br><br>There will be a memory test based on those items.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">So you will still move the box the same way,<br>but you must <strong>estimate the drone\'s location</strong> from where it has been.</div>',
 
-    '<p style="font-size:20px"> The full game will have 4 different environments. Each environment will also have a different drone with different flying behavior.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Items and memory test</strong><br><br>Each turn, a distinct <strong>item</strong> will appear where the supplies land.<br><br>Later, there will be a <strong>memory test</strong> about those items.</div>' +
+      mockRail(50, 50, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '+10', showItem: true, item: '🧩' }),
 
-    '<p style="font-size:20px"> You will now see the questions about the game again. Please answer all questions correctly, or we will have to end the game.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">4 environments</strong><br><br>The full game has <strong>4 environments</strong>.<br>Each environment has a different drone and a different movement pattern.</div>' +
+      mockGainLossComparison(),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Next step</strong><br><br>You will now answer questions about the game again.<br><strong>You must answer them correctly to continue.</strong></div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -66,19 +222,20 @@ var inst_summary = {
 var inst3_incorrect = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"><br><br> You did not respond. <br><br> We must terminate the game here.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><br><br><strong style="font-size:24px; color:#b00020;">You did not respond.</strong><br><br>We must terminate the game here.</div>'
   ],
-  show_clickable_nav: false,
+  show_clickable_nav: false
 };
 
 var inst1 = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.intro_task + '" width="40%"></img> <br><br><br> In this game, drones drop supply bags onto the ground. Your goal is to catch as many supplies as you can by moving your collector to where you think the supplies will land.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Your goal</strong><br><br>Drones drop supply bags onto the rail.<br>Move your <strong>box</strong> to where you think the supplies will land.</div>' +
+      mockRail(46, 58, { boxLocked: false, showDot: false, showLine: false, showItem: false }),
 
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.intro_controls + '" width="40%"></img> <br><br><br> You should use right and left arrow keys to move the collector.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">How to move</strong><br><br>Use the <strong>left</strong> and <strong>right arrow keys</strong> to move the white box labeled <strong>"YOU"</strong>.</div>',
 
-    '<p style="font-size:20px"><br><br> Now give it a try. Make a response by using the left or right arrow key.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Try it now</strong><br><br>Press the <strong>left</strong> or <strong>right arrow key</strong> to move the box.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -88,14 +245,26 @@ var inst1 = {
 var inst2 = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> After you position the collector, the sky will darken slightly. At this time you can no longer move the collector.</p>',
-    '<p style="font-size:20px"> You will then see the drone dropping a supply bag.</p>',
-    '<p style="font-size:20px"> The bag breaks open near the ground and the supplies scatter.</p>',
-    '<p style="font-size:20px"> Your score is determined by the number of items that you catch in your collector.<br><br><br> If you align your collector perfectly, you will catch all ten items! Otherwise, you will catch fewer depending on how far off your collector is.</p>',
-    '<p style="font-size:20px"> A new turn begins when the screen lights up again. At this time you are once again able to move the collector.</p>',
-    '<p style="font-size:20px"> Remember: when the screen is clear, you can move the collector. When it is slightly darkened, the collector is frozen.</p>',
-    '<p style="font-size:20px"> If you do not move the collector on one or two turns, we assume you are happy with its position. <br><br> However, you should not leave the collector in one place for more than a few turns. If you do, we will warn you, and if you persist, we may have to end the game early!</p>',
-    '<p style="font-size:20px"> Now give it a try. Notice that you can only move your collector when the screen is clear. <br><br><br>You can see each turn how many items you caught by the number from 0 to 10 that appears on the screen.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Locked box</strong><br><br>After you position the box, it becomes <strong>darker</strong>.<br>When it is darker, you <strong>cannot move it</strong>.</div>' +
+      mockBrightDarkComparison(),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Landing location</strong><br><br>A <strong>colored circle</strong> appears on the rail.<br>It shows where the supply bag landed.</div>' +
+      mockRail(42, 60, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '', showItem: false }),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">A <strong>dashed line</strong> connects the circle to your box,<br>showing the distance between them.</div>' +
+      mockRail(42, 60, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '', showItem: false }),
+
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">How to score</strong><br><br>Your score depends on how close your <strong>box</strong> is to the <strong>drop location</strong>.<br><br><strong style="font-size:24px; color:#0a7f2e;">Perfect alignment = +10</strong><br><br>If you are farther away, you get fewer points.</div>' +
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '+10', showItem: false }) +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Start of the next turn</strong><br><br>When the box becomes <strong>bright</strong> again, a new turn begins,<br>and you can move it again.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong>Rule to remember:</strong><br><br><strong>Bright box = movable</strong><br><strong>Dark box = frozen</strong></div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">Keep responding</strong><br><br>If you do not move the box for <strong>one or two turns</strong>, we assume you are satisfied with its position.<br><br>But do <strong>not</strong> leave it unchanged for too many turns.<br>You may be warned, and the game may end early.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Try it now</strong><br><br>Notice that you can move the box only when it is <strong>bright</strong>.<br><br>Also notice that your <strong>score</strong> appears as a number on the screen each turn.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -105,13 +274,20 @@ var inst2 = {
 var inst3 = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> The bag will fall near the drone, but the exact position will vary around the drone because of unpredictable winds!</p>',
-    '<p style="font-size:20px"> The bag might fall in front of the drone,</p>',
-    '<p style="font-size:20px"> or it might fall just under the drone,</p>',
-    '<p style="font-size:20px"> or it might fall behind the drone.</p>',
-    '<p style="font-size:20px">You may have noticed that the drone can also move unpredictably. The best prediction for its position on one turn is its position on the previous turn, but it may fly to a new location at any time.</p>',
-    '<p style="font-size:20px"><strong>Your best strategy is to position the collector directly under where you think the drone is located.</strong></p>',
-    '<p style="font-size:20px"> Now that you know how the game works, try playing a few turns, noticing that the drone moves and where the bag falls.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Wind makes the landing vary</strong><br><br>The bag falls <strong>near</strong> the drone,<br>but the exact landing spot varies because of <strong>unpredictable wind</strong>.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">The bag might fall <strong>in front of</strong> the drone,</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">or <strong>directly under</strong> the drone,</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">or <strong>behind</strong> the drone.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">The drone also moves</strong><br><br>The drone can move unpredictably too.<br>The best guess for where it is now is where it was on the previous turn,<br>but it can jump to a new location.</div>',
+
+    '<div style="font-size:21px; line-height:1.8; text-align:center;"><strong style="font-size:26px;">Best strategy</strong><br><br><strong>Place the box directly under where you think the drone is.</strong></div>' +
+      mockRail(50, 54, { boxLocked: false, showDot: true, showLine: true, valence: 'reward', score: '', showItem: false }),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Practice again</strong><br><br>Now play a few more turns and pay attention to<br><strong>how the drone moves</strong> and <strong>where the bag lands</strong>.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -121,10 +297,15 @@ var inst3 = {
 var inst4 = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> We are almost ready for the full game, but there are just a few important differences. <br>Most importantly, in the real game, you cannot actually see the drone, only the supply bag that it drops!</p>',
-    '<p style="font-size:20px">Your movement of the collector is exactly the same as before — but you have to estimate where the drone is located based on where it has been.</p>',
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.memory_example + '" width="40%"></img> <br><br><br>You will also notice that in each turn, a distinct item will appear where the supplies land.</p>',
-    '<p style="font-size:20px"> Now, try a few turns where the drone is not visible, also noting the item that appears on each turn.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Important change for the real game</strong><br><br>You will <strong>not</strong> be able to see the drone.<br><br>You will only see the <strong>colored circle</strong> showing where the bag landed.</div>' +
+      mockRail(44, 57, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+6', showItem: false }),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">You will still move the box the same way,<br>but now you must <strong>estimate where the drone is</strong> from where it has been.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Items will appear too</strong><br><br>Each turn, a distinct <strong>item</strong> will appear where the supplies land.</div>' +
+      mockRail(50, 50, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '', showItem: true, item: '🎲' }),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Try it now</strong><br><br>Play a few turns where the drone is <strong>not visible</strong>.<br>Also notice the <strong>item</strong> that appears each turn.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -134,13 +315,16 @@ var inst4 = {
 var inst5 = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> The full game will have 4 different environments with 4 different wind conditions. Each of the 4 environments will also have a different drone with different flying behavior.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">The full game</strong><br><br>There are <strong>4 environments</strong>.<br>Each has a different wind condition and a different drone movement pattern.</div>',
 
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.reward_example + '" width="40%"></img> <br><br><br><strong>In some environments, accurate placement helps you gain more points.</strong> The items you catch are valuable supplies, and each one adds to your score.</p>',
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px; color:#0a7f2e;">In some environments:</strong><br><br><strong>Better placement = GAIN MORE points</strong><br><br>Each item you catch <strong>adds</strong> points.<br><span style="font-weight:bold; color:#0a7f2e;">GREEN = gain</span></div>',
 
-    '<p style="font-size:20px"><img src="' + INSTR_IMG.loss_example + '" width="40%"></img> <br><br><br><strong>In other environments, accurate placement helps you lose fewer points.</strong> The items are hazardous, and each one you fail to catch with your shield costs you points.</p>',
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px; color:#b00020;">In other environments:</strong><br><br><strong>Better placement = LOSE FEWER points</strong><br><br>Each item you fail to catch <strong>costs</strong> points.<br><span style="font-weight:bold; color:#b00020;">RED = loss</span></div>' +
+      mockGainLossComparison(),
 
-    '<p style="font-size:20px"> You will be reminded each time the environment changes.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong>Key idea:</strong><br><br>Always try to place the box as accurately as possible.<br>That helps you either <strong style="color:#0a7f2e;">gain more</strong> or <strong style="color:#b00020;">lose less</strong>.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">You will be reminded whenever the environment changes.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -150,9 +334,21 @@ var inst5 = {
 var inst6 = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> Following each of the 4 environments, you will complete a memory task based on the items that appeared. <br>You will be asked which item in a pair appeared first, how many items you believe appeared between them, and for some pairs, where a middle item occurred on a timeline between the two.</p>',
-    '<p style="font-size:20px"> For the timeline question, you will see a slider with the two boundary items at each end and the middle item above. Move the slider to indicate where in time the middle item appeared relative to the two boundary items.</p>',
-    '<p style="font-size:20px"> You should note these items as they appear but you do not need to memorize them. <br>Remember: your primary goal is to maximize your score by catching as many items in your collector as you can!</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Memory task</strong><br><br>After each of the 4 environments, you will complete a short memory task about the items that appeared.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">You may be asked:<br><br><strong>1.</strong> Which item appeared first<br><strong>2.</strong> How many items appeared between two items<br><strong>3.</strong> Where a middle item appeared between two items</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">For the slider question, you will see <strong>two items at the ends</strong> and the <strong>middle item above</strong>.<br>Move the slider to show when the middle item appeared relative to the other two.</div>' +
+      '<div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;margin:18px auto 12px auto;width:82%;max-width:700px;">' +
+        '<div style="width:84px;height:84px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(180,180,180,.35);display:flex;align-items:center;justify-content:center;font-size:42px;">🪃</div>' +
+        '<div style="flex:1;text-align:center;">' +
+          '<div style="margin-bottom:10px;font-size:42px;">🪴</div>' +
+          '<input type="range" min="0" max="100" value="50" style="width:100%;">' +
+        '</div>' +
+        '<div style="width:84px;height:84px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(180,180,180,.35);display:flex;align-items:center;justify-content:center;font-size:42px;">🎲</div>' +
+      '</div>',
+
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:24px;">Main priority</strong><br><br>You should notice the items,<br>but you do <strong>not</strong> need to memorize them perfectly.<br><br><strong>Your main goal is still to maximize your score by placing the box as accurately as possible.</strong></div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -162,7 +358,7 @@ var inst6 = {
 var inst7 = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> The memory task will follow each environment.</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Reminder</strong><br><br>The memory task will appear <strong>after each environment</strong>.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -172,7 +368,7 @@ var inst7 = {
 var ready = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> We are now beginning the game.<br><br>Good luck!</p>',
+    '<div style="font-size:21px; line-height:1.8; text-align:center;"><strong style="font-size:28px;">The game is starting now.</strong><br><br><strong>Good luck!</strong></div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -182,7 +378,7 @@ var ready = {
 var quiz = {
   type: 'instructions',
   pages: [
-    '<p style="font-size:20px"> You will now see some questions about the game. You should answer all of them correctly to proceed.<br><br>Good luck!</p>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Instruction check</strong><br><br>You will now answer questions about the game.<br><br><strong>You must answer all of them correctly to continue.</strong><br><br>Good luck!</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -190,10 +386,11 @@ var quiz = {
 };
 
 var num_loops = 0;
+
 var comprehension1 = {
-  type: 'comprehension1',
+  type: 'comprehension1'
 };
 
 var comprehension2 = {
-  type: 'comprehension2',
+  type: 'comprehension2'
 };

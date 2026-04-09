@@ -1,124 +1,268 @@
+/* ═══════════════════════════════════════════════════════════════
+   game.min.css — Revised visual design
+   CSS-only backgrounds, simplified collector/bag, PE line, emoji items
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Block-specific gradient backgrounds ── */
+/* Block hues are set via CSS custom properties --block-hue / --block-sat
+   injected inline by trial.js */
+
 .game-container {
   height: 80vh;
-  width: 60vw;
+  width: 80vw;
+  max-width: 1400px;
   position: relative;
-  -webkit-transform: translate(-50%, 0%);
   transform: translate(-50%, 0%);
-  border: 3px solid #807256;
+  border: 2px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   overflow: hidden;
   left: 50%;
   top: 5%;
-  background: #000;
+  /* fallback; overridden by inline style from trial.js */
+  background: linear-gradient(
+    to bottom,
+    hsl(210, 38%, 18%) 0%,
+    hsl(210, 38%, 28%) 30%,
+    hsl(210, 38%, 42%) 55%,
+    hsl(210, 44%, 58%) 72%,
+    hsl(210, 48%, 72%) 85%,
+    hsl(210, 46%, 80%) 100%
+  );
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  user-select: none;
 }
 
 .main-container {
   height: 68.5vh;
-  width: 60vw;
+  width: 80vw;
+  max-width: 1400px;
   position: absolute;
   top: 0%;
   left: 50%;
-  -webkit-transform: translate(-50%, 0%);
   transform: translate(-50%, 0%);
   z-index: 3;
 }
 
-/* ── Sky / Land / Light layers ── */
-.bg-sky {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url('../img/task_assets/shared/sky.png') no-repeat center top / cover;
-  z-index: 0;
-}
-
-.bg-land {
+/* ── Ground strip (bottom 22%) ── */
+.bg-ground {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  z-index: 2;
-}
-
-.light1 {
-  position: absolute;
-  height: 100%;
-  width: 100%;
-  background: linear-gradient(to bottom, rgba(255, 234, 97, 0.12), rgba(0, 0, 0, 0));
-  opacity: 0%;
+  height: 22%;
+  /* overridden inline per block */
+  background: linear-gradient(
+    to bottom,
+    hsl(210, 46%, 80%) 0%,
+    hsl(210, 42%, 74%) 100%
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 1;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
 }
 
-/* ── Collector (bucket / shield) ── */
+/* ── Shared rail ── */
+.slider-rail {
+  position: absolute;
+  left: 8%;
+  width: 84%;
+  height: 3px;
+  top: 78%;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  z-index: 8;
+  pointer-events: none;
+}
+
+/* ── Collector box ── */
 .collector-wrap {
   position: absolute;
-  bottom: -4%;
-  width: 15%;
-  aspect-ratio: 1.1 / 1;
+  top: 78%;
+  width: 7%;
+  min-width: 40px;
+  height: 36px;
+  transform: translate(-50%, -50%);
+  z-index: 12;
+  pointer-events: none;
+  transition: left 0.06s linear;
+}
+
+.collector-chevron {
+  position: absolute;
+  top: -14px;
+  left: 50%;
   transform: translateX(-50%);
-  z-index: 9;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.collector-box {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 3px 10px rgba(0, 0, 0, 0.25);
+  transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collector-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  transition: color 0.25s;
+}
+
+/* Locked state */
+.collector-box.locked {
+  background: rgba(100, 100, 120, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.collector-box.locked .collector-label {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.collector-wrap.locked .collector-chevron {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Prediction-error dashed line ── */
+.pe-line {
+  position: absolute;
+  top: 78%;
+  height: 2px;
+  transform: translateY(-1px);
+  z-index: 10;
+  opacity: 0.7;
   pointer-events: none;
 }
 
-.collector-base,
-.collector-glow {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.pe-line.reward {
+  background: repeating-linear-gradient(
+    90deg,
+    #39ff14 0 4px,
+    transparent 4px 8px
+  );
 }
 
-.collector-glow {
-  opacity: 0.25;
+.pe-line.loss {
+  background: repeating-linear-gradient(
+    90deg,
+    #ff4444 0 4px,
+    transparent 4px 8px
+  );
 }
 
-/* Legacy bucket classes (kept for any remaining references) */
-.bucket1 {
+/* ── Bag dot (outcome position) ── */
+.bag-dot {
   position: absolute;
+  top: 78%;
   transform: translate(-50%, -50%);
-  overflow: visible;
-  left: 600px;
-  top: 104%;
-  height: 15%;
-  width: 15%;
-  content: url("../img/task_assets/shared/bucket1.png");
-  opacity: 100%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.2),
+    0 3px 8px rgba(0, 0, 0, 0.35);
+  z-index: 11;
+  pointer-events: none;
+  animation: bagAppear 0.25s ease-out;
 }
 
-.bucket2 {
+.bag-dot.reward {
+  background: radial-gradient(
+    circle,
+    hsl(130, 60%, 55%) 0%,
+    hsl(130, 45%, 38%) 100%
+  );
+}
+
+.bag-dot.loss {
+  background: radial-gradient(
+    circle,
+    hsl(0, 65%, 55%) 0%,
+    hsl(0, 50%, 40%) 100%
+  );
+}
+
+/* ── Feedback value text ── */
+.fb-value {
   position: absolute;
-  transform: translate(-50%, -50%);
-  overflow: visible;
-  left: 600px;
-  top: 104%;
-  height: 15%;
-  width: 15%;
-  content: url("../img/task_assets/shared/bucket2.png");
-  opacity: 0%;
-  z-index: 1;
+  top: 63%;
+  transform: translateX(-50%);
+  z-index: 15;
+  font-size: clamp(22px, 2.5vw, 32px);
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  animation: valueAppear 0.2s ease-out;
 }
 
-/* ── Drone ── */
+/* ── Stimulus emoji card ── */
+.stimulus-card {
+  position: absolute;
+  top: 30%;
+  transform: translateX(-50%);
+  z-index: 14;
+  width: 200px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  animation: itemFadeIn 0.35s ease-out;
+}
+
+.stimulus-card .emoji-stim {
+  font-size: 60px;
+  line-height: 1;
+}
+
+/* ── Drone (practice only) ── */
 .drone-el {
   position: absolute;
-  top: 4%;
-  width: 9%;
+  top: 6%;
+  font-size: 32px;
   transform: translateX(-50%);
   z-index: 6;
   visibility: hidden;
-  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
   user-select: none;
   pointer-events: none;
-  image-rendering: auto;
+  opacity: 0.3;
+  transition: opacity 0.3s;
 }
 
-/* Legacy bird classes (kept for compatibility) */
+.drone-el.visible {
+  visibility: visible;
+}
+
+.drone-el.outcome-phase {
+  opacity: 0.9;
+}
+
+/* ── Legacy bird class (kept for block-intro screens) ── */
 .bird {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -127,300 +271,39 @@
   height: 10%;
   width: 10%;
   overflow: visible;
-  opacity: 100%;
   visibility: hidden;
 }
 
-.bird[number='0'] { content: url("../img/task_assets/reward/drone0.png"); }
-.bird[number='1'] { content: url("../img/task_assets/reward/drone1.png"); }
-.bird[number='2'] { content: url("../img/task_assets/reward/drone2.png"); }
-.bird[number='3'] { content: url("../img/task_assets/reward/drone3.png"); }
-.bird[number='4'] { content: url("../img/task_assets/reward/drone4.png"); }
-
-/* ── Drop bag ── */
-.drop-bag {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  width: 7%;
-  height: auto;
-  z-index: 7;
-  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
-  user-select: none;
-  pointer-events: none;
-}
-
-/* Legacy bag class */
-.bag {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  left: 35%;
-  height: auto;
-  width: 8%;
-  animation: idle;
-  animation-timing-function: ease-in;
-  animation-duration: 1s;
-  animation-iteration-count: 1;
-  opacity: 0%;
-  top: 115%;
-  content: url("../img/task_assets/reward/supply-bag.png");
-}
-
-@keyframes bagdrop {
-  0% {
-    top: 18%;
-    opacity: 100%;
-  }
-  80% {
-    top: 82%;
-    opacity: 100%;
-  }
-  100% {
-    top: 82%;
-    opacity: 0%;
-  }
-}
-
-@keyframes idle {
-  top: 85%;
-  visibility: hidden;
-}
-
-/* ── Drop objects (replaces gold coins) ── */
-.drop-obj {
-  position: absolute;
-  width: 3vw;
-  min-width: 20px;
-  max-width: 40px;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
-  z-index: 8;
-  visibility: hidden;
-  pointer-events: none;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.12));
-}
-
-/* Legacy gold class */
-.gold {
-  position: absolute;
-  left: 35%;
-  height: 0.7vw;
-  width: 0.7vw;
-  border-radius: 100%;
-  animation: idle;
-  animation-timing-function: linear;
-  animation-duration: 1s;
-  animation-iteration-count: 1;
-  opacity: 100%;
-  top: 115%;
-  background: radial-gradient(circle at 30% 30%, #ffffe6 0%, #ffd700 60%, #b8860b 100%);
-  border: 0.07vw solid #b8860b;
-}
-
-@keyframes drop {
+/* ── Animations ── */
+@keyframes bagAppear {
   from {
-    top: 85%;
-    transform: translateX(0);
-  }
-  to {
-    top: 115%;
-    transform: translateX(0);
-  }
-}
-
-@keyframes drop_left {
-  from {
-    top: 85%;
-    transform: translateX(0);
-  }
-  to {
-    top: 115%;
-    transform: translateX(-20px);
-  }
-}
-
-@keyframes drop_right {
-  from {
-    top: 85%;
-    transform: translateX(0);
-  }
-  to {
-    top: 115%;
-    transform: translateX(20px);
-  }
-}
-
-/* ── CSS Explosion (replaces expl.png) ── */
-.explosion-container {
-  position: absolute;
-  width: 0;
-  height: 0;
-  z-index: 6;
-  pointer-events: none;
-}
-
-.expl-flash {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: clamp(22px, 4.5vw, 55px);
-  height: clamp(22px, 4.5vw, 55px);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0.3);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.expl-flash.fire {
-  animation: flashPop 220ms ease-out forwards;
-}
-
-.expl-flash.reward {
-  background: radial-gradient(circle, rgba(255, 248, 190, 0.95), rgba(255, 215, 0, 0.45) 55%, transparent 100%);
-}
-
-.expl-flash.loss {
-  background: radial-gradient(circle, rgba(255, 210, 210, 0.95), rgba(255, 68, 68, 0.45) 55%, transparent 100%);
-}
-
-@keyframes flashPop {
-  0% {
     transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
-  35% {
-    transform: translate(-50%, -50%) scale(1.15);
-    opacity: 0.85;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.5);
+}
+
+@keyframes valueAppear {
+  from {
+    transform: translateX(-50%) translateY(8px);
     opacity: 0;
   }
-}
-
-.expl-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  pointer-events: none;
-}
-
-.expl-ring.fire {
-  animation: ringExpand 400ms cubic-bezier(.22, .61, .36, 1) forwards;
-}
-
-.expl-ring.reward {
-  border: 2.5px solid rgba(255, 215, 0, 0.65);
-  box-shadow:
-    0 0 16px 4px rgba(255, 215, 0, 0.25),
-    inset 0 0 10px rgba(255, 215, 0, 0.12);
-}
-
-.expl-ring.loss {
-  border: 2.5px solid rgba(255, 68, 68, 0.65);
-  box-shadow:
-    0 0 16px 4px rgba(255, 68, 68, 0.25),
-    inset 0 0 10px rgba(255, 68, 68, 0.12);
-}
-
-@keyframes ringExpand {
-  0% {
-    width: 0;
-    height: 0;
-    opacity: 0.9;
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
   }
-  45% {
-    opacity: 0.75;
-  }
-  100% {
-    width: clamp(65px, 10vw, 130px);
-    height: clamp(65px, 10vw, 130px);
+}
+
+@keyframes itemFadeIn {
+  from {
+    transform: translateX(-50%) translateY(6px);
     opacity: 0;
   }
-}
-
-.expl-particle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  opacity: 0;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-
-.expl-particle.reward {
-  background: radial-gradient(circle, #fffbe0, #ffd700);
-  box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
-}
-
-.expl-particle.loss {
-  background: radial-gradient(circle, #ffd4d4, #ff4444);
-  box-shadow: 0 0 4px rgba(255, 68, 68, 0.5);
-}
-
-/* Legacy explosion class */
-.expl1 {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  overflow: visible;
-  left: 600px;
-  top: 80%;
-  height: 15%;
-  width: 15%;
-  animation: nope;
-  animation-timing-function: linear;
-  animation-iteration-count: 1;
-  animation-duration: 3s;
-  opacity: 0%;
-}
-
-@keyframes explode {
-  from { opacity: 100%; }
-  to   { opacity: 0%; }
-}
-
-@keyframes nope {
-  opacity: 0%;
-}
-
-/* ── Feedback overlay ── */
-.fb-overlay {
-  position: absolute;
-  top: 48%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: clamp(15px, 2vw, 29px);
-  font-weight: 800;
-  z-index: 20;
-  opacity: 0;
-  pointer-events: none;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
-  background: rgba(0, 0, 0, 0.35);
-  padding: 8px 28px;
-  border-radius: 10px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-/* ── Stimulus image ── */
-.stimulus-img {
-  position: absolute;
-  z-index: 15;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  object-fit: contain;
-}
-
-/* ── Legacy helper classes retained for compatibility ── */
-.star {
-  display: none;
-}
-
-@keyframes disappear {
-  visibility: hidden;
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
 }

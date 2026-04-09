@@ -31,16 +31,16 @@ jsPsych.plugins['comprehension1'] = (function() {
 
     // Define comprehension check questions.
     var prompts = [
-      "1. Your goal is to collect as many coins as you can.",
-      "2. The bird never changes its location.",
-      "3. You can move the bucket both when the screen is clear and when it is darkened.",
-      "4. The bag will fall near the bird, but the exact position will vary around the bird.",
-      "5. Your best strategy is to keep the bucket directly under where you think the bird is located.",
-      "6. If you leave the bucket in one place for a long time, the game may end early.",
-      "7. You will receive a bonus based on the number of coins you catch.",
-      "8. You should note these items as they appear but you do not need to memorize them.",
+      "1. Your goal is to move the box as close to the invisible drone as you can.",
+      "2. The drone never changes its location.",
+      "3. You can move the box both when it is bright and when it is darkened.",
+      "4. The bag will fall near the drone, but the exact position will vary around the drone.",
+      "5. Your best strategy is to place the box directly under where you think the invisible drone is.",
+      "6. If you leave the box in one place for a long time, the game may end early.",
+      "7. You will receive a bonus based on how closely your box tracks the invisible drone.",
+      "8. You should note these items as they appear, but you do not need to memorize them.",
       "9. There will be a memory task after each environment based on the items that appear.",
-      "10. All of the environments have the same wind patterns and birds with the same flying behavior."
+      "10. All of the environments have the same wind patterns, and drones with the same flying route."
     ];
 
     // Define response options.

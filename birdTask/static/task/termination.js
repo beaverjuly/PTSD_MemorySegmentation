@@ -86,25 +86,16 @@ jsPsych.plugins["termination"] = (function() {
 
   plugin.trial = function(display_element, trial) {
 
-    // made based on the instructions plugin
-    // var correctness = trial.correctness;
-    // var incorrect = correctness.findIndex(element => element == 0) +1;
-    // trial.incorrect = incorrect;
-
     trial.pages = [
       '<p style="font-size:20px">Your answer to <b> question ' + trial.incorrect + '</b> was incorrect.'+ '</p>',
       '<p style="font-size:20px"><br><br> We have to terminate the game here because some of your answers were incorrect for the second time.</p>',
       '<p style="font-size:20px">You may still be eligible for a partial payment - please click the "next" button, ' +
         'then close the survey and select "Stop Without Completing" on Prolific.</p>',
     ];
-    //
 
     var current_page = 0;
-
     var view_history = [];
-
     var start_time = performance.now();
-
     var last_page_update_time = start_time;
 
     function btnListener(evt){
@@ -149,72 +140,52 @@ jsPsych.plugins["termination"] = (function() {
         display_element.querySelector('#jspsych-instructions-next').addEventListener('click', btnListener);
       } else {
         if (trial.show_page_number && trial.pages.length > 1) {
-          // page numbers for non-mouse navigation
           html += "<div class='jspsych-instructions-pagenum'>"+pagenum_display+"</div>"
         }
         display_element.innerHTML = html;
       }
-
     }
 
     function next() {
-
       add_current_page_to_view_history()
-
       current_page++;
-
-      // if done, finish up...
       if (current_page >= trial.pages.length) {
         endTrial();
       } else {
         show_current_page();
       }
-
     }
 
     function back() {
-
       add_current_page_to_view_history()
-
       current_page--;
-
       show_current_page();
     }
 
     function add_current_page_to_view_history() {
-
       var current_time = performance.now();
-
       var page_view_time = current_time - last_page_update_time;
-
       view_history.push({
         page_index: current_page,
         viewing_time: page_view_time
       });
-
       last_page_update_time = current_time;
     }
 
     function endTrial() {
-
       if (trial.allow_keys) {
         jsPsych.pluginAPI.cancelKeyboardResponse(keyboard_listener);
       }
-
       display_element.innerHTML = '';
-
       var trial_data = {
         view_history: view_history,
         rt: performance.now() - start_time,
         incorrect: trial.incorrect
       };
-
       jsPsych.finishTrial(trial_data);
     }
 
     var after_response = function(info) {
-
-      // have to reinitialize this instead of letting it persist to prevent accidental skips of pages by holding down keys too long
       keyboard_listener = jsPsych.pluginAPI.getKeyboardResponse({
         callback_function: after_response,
         valid_responses: [trial.key_forward, trial.key_backward],
@@ -222,17 +193,14 @@ jsPsych.plugins["termination"] = (function() {
         persist: false,
         allow_held_key: false
       });
-      // check if key is forwards or backwards and update page
       if (jsPsych.pluginAPI.compareKeys(info.key, trial.key_backward)) {
         if (current_page !== 0 && trial.allow_backward) {
           back();
         }
       }
-
       if (jsPsych.pluginAPI.compareKeys(info.key, trial.key_forward)) {
         next();
       }
-
     };
 
     show_current_page();

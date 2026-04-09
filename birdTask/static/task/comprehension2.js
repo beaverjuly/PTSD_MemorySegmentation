@@ -31,12 +31,12 @@ jsPsych.plugins['comprehension2'] = (function() {
 
     // Define comprehension check questions.
     var prompts = [
-      "</b>&nbsp;&nbsp; 1. The bird never changes its location.",
-      "</b>&nbsp;&nbsp; 2. The bag will fall near the bird, but the exact position will vary around the bird.",
-      "</b>&nbsp;&nbsp; 3. Your best strategy is to keep the bucket directly under where you think the bird is located (from your estimation).",
-      "</b>&nbsp;&nbsp; 4. The best guess for the bird's current position is its position on the previous turn.",
-      "</b>&nbsp;&nbsp; 5. How many birds are there in the game (in total)?",
-      "</b>&nbsp;&nbsp; 6. A different item will appear where the coins drop on every turn.",
+      "</b>&nbsp;&nbsp; 1. The drone never changes its location.",
+      "</b>&nbsp;&nbsp; 2. The item will fall near the drone, but the exact position will vary around the drone.",
+      "</b>&nbsp;&nbsp; 3. Your best strategy is to keep the box directly under where you think the invisible drone is located.",
+      "</b>&nbsp;&nbsp; 4. The best guess for the drone's current position is its position on the previous turn.",
+      "</b>&nbsp;&nbsp; 5. How many drones are there in the game (in total)?",
+      "</b>&nbsp;&nbsp; 6. A different item will appear on every turn.",
     ];
 
     // Define response options.

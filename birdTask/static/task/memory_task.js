@@ -5,9 +5,10 @@
  *
  * Stage 1: Temporal order judgement ("Which came first?")
  * Stage 2: Intervening-item count ("How many items between these two?")
- * Stage 3: Slider placement (only for 6 selected middle-item pairs:
- * 3 boundary-middle and 3 nonboundary-middle)
- * Visual style derived from preview.js Block 3 rendering pattern.
+ * Stage 3: Slider placement (only for selected middle-item pairs)
+ *
+ * Revised to support emoji stimuli directly, while still remaining
+ * compatible with image-path stimuli if needed.
  */
 
 jsPsych.plugins['memory-task'] = (function() {
@@ -24,7 +25,7 @@ jsPsych.plugins['memory-task'] = (function() {
       block_num: {
         type: jsPsych.plugins.parameterType.INT,
         default: undefined
-      },
+      }
     }
   };
 
@@ -35,7 +36,6 @@ jsPsych.plugins['memory-task'] = (function() {
     [39, 41], [42, 45]
   ];
 
-  // Six slider-eligible pairs
   var SLIDER_PAIRS_LOCAL =
     (typeof SLIDER_PAIRS !== 'undefined') ? SLIDER_PAIRS : [[2,4],[11,13],[16,18],[22,24],[34,36],[39,41]];
 
@@ -80,7 +80,9 @@ jsPsych.plugins['memory-task'] = (function() {
     return pairInList(pair, SLIDER_PAIRS_LOCAL);
   }
 
-  // Shared visual helpers
+  function isEmojiStim(src) {
+    return typeof src === 'string' && !src.includes('/') && !src.includes('.');
+  }
 
   function createBlock3Wrapper() {
     var wrap = document.createElement('div');
@@ -100,17 +102,35 @@ jsPsych.plugins['memory-task'] = (function() {
     return label;
   }
 
-  function createCardImg(src, size) {
+  function createStimCard(src, size) {
     var card = document.createElement('div');
-    card.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
+    var boxSize = size === 'medium' ? 140 : (size === 'small' ? 88 : 140);
+
+    card.style.cssText =
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+      'width:' + boxSize + 'px;height:' + boxSize + 'px;' +
+      'border:2px solid rgba(255,255,255,.18);border-radius:12px;' +
+      'background:rgba(255,255,255,.08);box-shadow:0 6px 18px rgba(0,0,0,.18);';
+
+    if (isEmojiStim(src)) {
+      var span = document.createElement('span');
+      span.textContent = src;
+      span.style.cssText =
+        'font-size:' + (size === 'medium' ? '72px' : '46px') + ';' +
+        'line-height:1;display:flex;align-items:center;justify-content:center;' +
+        'width:100%;height:100%;user-select:none;';
+      card.appendChild(span);
+      return { card: card, img: null, ready: true };
+    }
+
     var img = document.createElement('img');
     img.src = src;
-    var maxW = size === 'medium' ? '300px' : (size === 'small' ? '140px' : '300px');
     img.style.cssText =
-      'max-width:' + maxW + ';height:auto;border:2px solid rgba(255,255,255,.18);' +
+      'max-width:' + boxSize + 'px;height:auto;max-height:' + boxSize + 'px;' +
       'border-radius:8px;background:rgba(255,255,255,.08);';
     card.appendChild(img);
-    return { card: card, img: img };
+
+    return { card: card, img: img, ready: false };
   }
 
   function createSubtext(text) {
@@ -118,6 +138,29 @@ jsPsych.plugins['memory-task'] = (function() {
     p.style.cssText = 'font-size:16px;text-align:center;color:#555;margin:0;';
     p.textContent = text;
     return p;
+  }
+
+  function waitForCardAssets(cards, onReady) {
+    var total = cards.length;
+    var loaded = 0;
+
+    function markReady() {
+      loaded++;
+      if (loaded >= total) onReady();
+    }
+
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      if (!c || c.ready || !c.img) {
+        markReady();
+      } else {
+        c.img.addEventListener('load', markReady, { once: true });
+        c.img.addEventListener('error', markReady, { once: true });
+        if (c.img.complete) {
+          markReady();
+        }
+      }
+    }
   }
 
   plugin.trial = function(display_element, trial) {
@@ -150,9 +193,6 @@ jsPsych.plugins['memory-task'] = (function() {
     var _trueStcParam = (Array.isArray(_bp.true_stc) && _bp.true_stc.length >= block) ? _bp.true_stc[block - 1] : null;
     var _valence = (Array.isArray(_bp.true_valence) && _bp.true_valence.length >= block) ? _bp.true_valence[block - 1] : null;
 
-    // Current convention:
-    // vol 49 = high volatility, vol 4 = low volatility
-    // stc 64 = high stochasticity, stc 16 = low stochasticity
     var _volLevel = (_trueVolParam === null) ? null : (_trueVolParam === 49 ? 'high' : 'low');
     var _stcLevel = (_trueStcParam === null) ? null : (_trueStcParam === 64 ? 'high' : 'low');
     var _condition = (_trueVolParam === null || _trueStcParam === null) ? null : ('vol' + _trueVolParam + '_stc' + _trueStcParam);
@@ -240,21 +280,20 @@ jsPsych.plugins['memory-task'] = (function() {
 
       var pairWrap = document.createElement('div');
       pairWrap.className = 'b3-pair-vertical';
-      pairWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:20px;margin-bottom:20px;';
+      pairWrap.style.cssText =
+        'display:flex;flex-direction:column;align-items:center;gap:20px;margin-bottom:20px;';
 
-      var top = createCardImg(left_img, 'medium');
+      var top = createStimCard(left_img, 'medium');
       var topLabel = document.createElement('div');
       topLabel.style.cssText = 'font-size:24px;font-weight:bold;margin-top:10px;color:#333;';
       topLabel.textContent = '1';
       top.card.appendChild(topLabel);
-      top.img.id = 'order-img-top';
 
-      var bot = createCardImg(right_img, 'medium');
+      var bot = createStimCard(right_img, 'medium');
       var botLabel = document.createElement('div');
       botLabel.style.cssText = 'font-size:24px;font-weight:bold;margin-top:10px;color:#333;';
       botLabel.textContent = '2';
       bot.card.appendChild(botLabel);
-      bot.img.id = 'order-img-bot';
 
       pairWrap.appendChild(top.card);
       pairWrap.appendChild(bot.card);
@@ -269,17 +308,10 @@ jsPsych.plugins['memory-task'] = (function() {
       display_element.appendChild(wrap);
 
       var start_time = performance.now();
-      var loaded = 0;
 
-      function onLoad() {
-        loaded++;
-        if (loaded >= 2) wrap.style.visibility = 'visible';
-      }
-
-      top.img.addEventListener('load', onLoad);
-      bot.img.addEventListener('load', onLoad);
-      if (top.img.complete) onLoad();
-      if (bot.img.complete) onLoad();
+      waitForCardAssets([top, bot], function() {
+        wrap.style.visibility = 'visible';
+      });
 
       function keyHandler(e) {
         if (e.repeat) return;
@@ -341,12 +373,11 @@ jsPsych.plugins['memory-task'] = (function() {
       wrap.appendChild(createStepLabel('How many items were shown between these two?'));
 
       var pairWrap = document.createElement('div');
-      pairWrap.style.cssText = 'display:flex;flex-direction:row;justify-content:center;align-items:center;gap:80px;margin-bottom:20px;';
+      pairWrap.style.cssText =
+        'display:flex;flex-direction:row;justify-content:center;align-items:center;gap:80px;margin-bottom:20px;';
 
-      var l = createCardImg(left_img, 'medium');
-      l.img.id = 'dist-left-img';
-      var r = createCardImg(right_img, 'medium');
-      r.img.id = 'dist-right-img';
+      var l = createStimCard(left_img, 'medium');
+      var r = createStimCard(right_img, 'medium');
       pairWrap.appendChild(l.card);
       pairWrap.appendChild(r.card);
       wrap.appendChild(pairWrap);
@@ -359,7 +390,8 @@ jsPsych.plugins['memory-task'] = (function() {
       input.max = '9';
       input.id = 'distance-input';
       input.maxLength = 1;
-      input.style.cssText = 'font-size:22px;padding:8px;width:200px;text-align:center;margin-top:18px;-moz-appearance:textfield;appearance:textfield;';
+      input.style.cssText =
+        'font-size:22px;padding:8px;width:200px;text-align:center;margin-top:18px;-moz-appearance:textfield;appearance:textfield;';
       inputWrap.appendChild(input);
       inputWrap.appendChild(createSubtext('Press 0-9 to submit your answer.'));
 
@@ -375,26 +407,18 @@ jsPsych.plugins['memory-task'] = (function() {
       if (!document.getElementById('memory-distance-input-style')) {
         var style = document.createElement('style');
         style.id = 'memory-distance-input-style';
-        style.innerHTML = '#distance-input::-webkit-outer-spin-button,#distance-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}';
+        style.innerHTML =
+          '#distance-input::-webkit-outer-spin-button,#distance-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}';
         document.head.appendChild(style);
       }
 
       var start_time = performance.now();
       var submitted = false, locked = false;
 
-      var loaded = 0;
-      function onLoad() {
-        loaded++;
-        if (loaded >= 2) {
-          wrap.style.visibility = 'visible';
-          input.focus();
-        }
-      }
-
-      l.img.addEventListener('load', onLoad);
-      r.img.addEventListener('load', onLoad);
-      if (l.img.complete) onLoad();
-      if (r.img.complete) onLoad();
+      waitForCardAssets([l, r], function() {
+        wrap.style.visibility = 'visible';
+        input.focus();
+      });
 
       function showError(msg) {
         errorEl.textContent = msg;
@@ -496,7 +520,7 @@ jsPsych.plugins['memory-task'] = (function() {
       var boundaryWrap = document.createElement('div');
       boundaryWrap.className = 'b3-boundary-card-wrap';
       boundaryWrap.style.cssText = 'margin-bottom:20px;';
-      var middleCard = createCardImg(middleStim, 'small');
+      var middleCard = createStimCard(middleStim, 'small');
       boundaryWrap.appendChild(middleCard.card);
       wrap.appendChild(boundaryWrap);
 
@@ -511,7 +535,7 @@ jsPsych.plugins['memory-task'] = (function() {
       var firstImg = (true_first_idx === idx1) ? stim1 : stim2;
       var secondImg = (true_first_idx === idx1) ? stim2 : stim1;
 
-      var leftAnchor = createCardImg(firstImg, 'small');
+      var leftAnchor = createStimCard(firstImg, 'small');
       leftAnchor.card.classList.add('b3-anchor-card', 'left-anchor');
       leftAnchor.card.style.cssText += 'flex-shrink:0;';
       line.appendChild(leftAnchor.card);
@@ -530,7 +554,7 @@ jsPsych.plugins['memory-task'] = (function() {
       sliderWrap.appendChild(slider);
       line.appendChild(sliderWrap);
 
-      var rightAnchor = createCardImg(secondImg, 'small');
+      var rightAnchor = createStimCard(secondImg, 'small');
       rightAnchor.card.classList.add('b3-anchor-card', 'right-anchor');
       rightAnchor.card.style.cssText += 'flex-shrink:0;';
       line.appendChild(rightAnchor.card);
@@ -545,7 +569,8 @@ jsPsych.plugins['memory-task'] = (function() {
       wrap.appendChild(instrText);
 
       var submitBtn = document.createElement('button');
-      submitBtn.style.cssText = 'font-size:18px;padding:10px 32px;cursor:pointer;border:2px solid #333;border-radius:8px;background:#fff;';
+      submitBtn.style.cssText =
+        'font-size:18px;padding:10px 32px;cursor:pointer;border:2px solid #333;border-radius:8px;background:#fff;';
       submitBtn.textContent = 'Submit';
       wrap.appendChild(submitBtn);
 
