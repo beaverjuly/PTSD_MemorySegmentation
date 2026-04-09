@@ -41,7 +41,7 @@ function mockRail(boxLeftPct, dotLeftPct, opts) {
   var valence = opts.valence || 'reward';
   var score = opts.score || '';
   var showItem = !!opts.showItem;
-  var item = opts.item || '🧩';
+  var item = opts.item || '🍤';
 
   var boxBg = boxLocked ? 'rgba(100,100,120,.72)' : 'rgba(255,255,255,.92)';
   var boxBorder = boxLocked ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.62)';
@@ -168,35 +168,40 @@ var inst1_incorrect = {
 var inst_summary = {
   type: 'instructions',
   pages: [
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">You did not answer all questions correctly.</strong><br><br>Some instructions will now be repeated.<br><br><strong>Pay close attention to the key rules.</strong></div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">You did not answer all questions correctly.</strong><br><br>Some instructions will now be repeated.<br><br><strong>Focus on the key rules below.</strong></div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Goal of the game</strong><br><br>Drones drop supply bags onto the rail.<br>Your goal is to move your <strong>box</strong> to catch as many supplies as possible.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Goal</strong><br><br>Move your <strong>box</strong> to catch the falling supplies.</div>' +
       mockRail(45, 58, { boxLocked: false, showDot: false, showLine: false, showItem: false }),
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Move the box</strong><br><br>Use the <strong>left</strong> and <strong>right arrow keys</strong> to move the white box labeled <strong>"YOU"</strong>.</div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">When you can move</strong><br><br>When the box is <strong>bright</strong>, you can move it.<br>When the box turns <strong>darker</strong>, it is <strong>locked</strong> and you cannot move it.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">When you can move</strong><br><br><strong>Bright box = movable</strong><br><strong>Darker box = locked</strong></div>' +
       mockBrightDarkComparison(),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Where the bag landed</strong><br><br>A <strong>colored circle</strong> will appear on the rail.<br>It shows where the bag landed.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Landing location</strong><br><br>A <strong>colored circle</strong> shows where the bag landed.</div>' +
       mockRail(41, 62, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;">A <strong>dashed line</strong> shows the distance between your box and the landing location.</div>' +
       mockRail(41, 62, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Your score</strong><br><br>A <strong>number</strong> will appear each turn.<br>That number is your score for that turn.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Your score</strong><br><br>A <strong>number</strong> appears each turn.</div>' +
       mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '+10', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">How scoring works</strong><br><br>Your score depends on how close your <strong>box</strong> is to the <strong>colored circle</strong>.<br><br><strong style="font-size:24px; color:#0a7f2e;">Perfect alignment = +10</strong><br><br>The farther away your box is, the fewer points you get.</div>' +
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Reward scoring</strong><br><br>Your score depends on how close your <strong>box</strong> is to the <strong>drop location</strong>.<br><br><strong style="font-size:24px; color:#0a7f2e;">Perfect alignment = +10</strong><br><br>The farther away your box is, the fewer points you get.</div>' +
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '+10', showItem: false }) +
       mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Next turn</strong><br><br>A new turn begins when the box becomes <strong>bright</strong> again.<br>That means you can move it again.</div>',
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Loss scoring</strong><br><br>In some environments, good placement helps you <strong>lose fewer points</strong>.<br><br><strong style="font-size:24px; color:#b00020;">Perfect alignment = 0</strong><br><br>The farther away your box is, the more points you lose.</div>' +
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '0', showItem: false }) +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-7', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">Do not stop responding</strong><br><br>If you do not move the box for <strong>one or two turns</strong>, we assume you are satisfied with its position.<br><br>But do <strong>not</strong> leave it unchanged for too many turns.<br>You will be warned, and the game may end early.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Next turn</strong><br><br>When the box becomes <strong>bright</strong> again, the next turn begins.</div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Where the bag falls</strong><br><br>The bag falls <strong>near the drone</strong>, but not always in exactly the same place.<br>This is because of <strong>unpredictable wind</strong>.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">Keep responding</strong><br><br>If you stop moving the box for too many turns, you may be warned and the game may end early.</div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">The drone also moves</strong><br><br>The drone can change position over time.<br>The best guess for where it is now is where it was on the previous turn,<br>but it may move to a new location.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Where the bag falls</strong><br><br>The bag falls <strong>near the drone</strong>, but wind makes the exact landing spot vary.</div>',
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">The drone also moves</strong><br><br>The best guess for where the drone is now is where it was on the previous turn, but it can move to a new location.</div>',
 
     '<div style="font-size:21px; line-height:1.8; text-align:center;"><strong style="font-size:26px;">Best strategy</strong><br><br><strong>Put the box directly under where you think the drone is.</strong></div>' +
       mockRail(50, 54, { boxLocked: false, showDot: true, showLine: true, valence: 'reward', score: '', showItem: false }),
@@ -204,12 +209,12 @@ var inst_summary = {
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Important change in the real game</strong><br><br>You will <strong>not</strong> see the drone.<br>You will only see the <strong>colored circle</strong> showing where the bag landed.</div>' +
       mockRail(44, 57, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+6', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;">So you will still move the box the same way,<br>but you must <strong>estimate the drone\'s location</strong> from where it has been.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">So you still move the box the same way, but you must <strong>estimate the drone\'s location</strong> from where it has been.</div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Items and memory test</strong><br><br>Each turn, a distinct <strong>item</strong> will appear where the supplies land.<br><br>Later, there will be a <strong>memory test</strong> about those items.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Items and memory test</strong><br><br>Each turn, a distinct <strong>item</strong> will appear. Later, there will be a short <strong>memory test</strong> about those items.</div>' +
       mockRail(50, 50, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '+10', showItem: true, item: '🧩' }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">4 environments</strong><br><br>The full game has <strong>4 environments</strong>.<br>Each environment has a different drone and a different movement pattern.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">4 environments</strong><br><br>The full game has <strong>4 environments</strong> with different movement patterns and scoring contexts.</div>' +
       mockGainLossComparison(),
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Next step</strong><br><br>You will now answer questions about the game again.<br><strong>You must answer them correctly to continue.</strong></div>'
@@ -230,10 +235,10 @@ var inst3_incorrect = {
 var inst1 = {
   type: 'instructions',
   pages: [
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Your goal</strong><br><br>Drones drop supply bags onto the rail.<br>Move your <strong>box</strong> to where you think the supplies will land.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Goal</strong><br><br>Move your <strong>box</strong> to where you think the supplies will land.</div>' +
       mockRail(46, 58, { boxLocked: false, showDot: false, showLine: false, showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">How to move</strong><br><br>Use the <strong>left</strong> and <strong>right arrow keys</strong> to move the white box labeled <strong>"YOU"</strong>.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">How to move</strong><br><br>Use the <strong>left</strong> and <strong>right arrow keys</strong>.</div>',
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Try it now</strong><br><br>Press the <strong>left</strong> or <strong>right arrow key</strong> to move the box.</div>'
   ],
@@ -248,23 +253,27 @@ var inst2 = {
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Locked box</strong><br><br>After you position the box, it becomes <strong>darker</strong>.<br>When it is darker, you <strong>cannot move it</strong>.</div>' +
       mockBrightDarkComparison(),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Landing location</strong><br><br>A <strong>colored circle</strong> appears on the rail.<br>It shows where the supply bag landed.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Landing location</strong><br><br>A <strong>colored circle</strong> shows where the bag landed.</div>' +
       mockRail(42, 60, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;">A <strong>dashed line</strong> connects the circle to your box,<br>showing the distance between them.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">A <strong>dashed line</strong> shows the distance between your box and the landing location.</div>' +
       mockRail(42, 60, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">How to score</strong><br><br>Your score depends on how close your <strong>box</strong> is to the <strong>drop location</strong>.<br><br><strong style="font-size:24px; color:#0a7f2e;">Perfect alignment = +10</strong><br><br>If you are farther away, you get fewer points.</div>' +
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Reward scoring</strong><br><br>Your score depends on how close your <strong>box</strong> is to the <strong>drop location</strong>.<br><br><strong style="font-size:24px; color:#0a7f2e;">Perfect alignment = +10</strong><br><br>If you are farther away, you get fewer points.</div>' +
       mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '+10', showItem: false }) +
       mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Start of the next turn</strong><br><br>When the box becomes <strong>bright</strong> again, a new turn begins,<br>and you can move it again.</div>',
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Loss scoring</strong><br><br>In some environments, good placement helps you <strong>lose fewer points</strong>.<br><br><strong style="font-size:24px; color:#b00020;">Perfect alignment = 0</strong><br><br>If you are farther away, you lose more points.</div>' +
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '0', showItem: false }) +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-7', showItem: false }),
+
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Start of the next turn</strong><br><br>When the box becomes <strong>bright</strong> again, a new turn begins.</div>',
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong>Rule to remember:</strong><br><br><strong>Bright box = movable</strong><br><strong>Dark box = frozen</strong></div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">Keep responding</strong><br><br>If you do not move the box for <strong>one or two turns</strong>, we assume you are satisfied with its position.<br><br>But do <strong>not</strong> leave it unchanged for too many turns.<br>You may be warned, and the game may end early.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px; color:#b00020;">Keep responding</strong><br><br>If you stop moving the box for too many turns, you may be warned and the game may end early.</div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Try it now</strong><br><br>Notice that you can move the box only when it is <strong>bright</strong>.<br><br>Also notice that your <strong>score</strong> appears as a number on the screen each turn.</div>'
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Try it now</strong><br><br>Notice that you can move the box only when it is <strong>bright</strong>, and your <strong>score</strong> appears after each turn.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -274,20 +283,20 @@ var inst2 = {
 var inst3 = {
   type: 'instructions',
   pages: [
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Wind makes the landing vary</strong><br><br>The bag falls <strong>near</strong> the drone,<br>but the exact landing spot varies because of <strong>unpredictable wind</strong>.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Wind makes the landing vary</strong><br><br>The bag falls <strong>near</strong> the drone, but wind changes the exact landing spot.</div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;">The bag might fall <strong>in front of</strong> the drone,</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">It may land <strong>in front of</strong> the drone,</div>',
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;">or <strong>directly under</strong> the drone,</div>',
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;">or <strong>behind</strong> the drone.</div>',
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">The drone also moves</strong><br><br>The drone can move unpredictably too.<br>The best guess for where it is now is where it was on the previous turn,<br>but it can jump to a new location.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">The drone also moves</strong><br><br>The best guess for where it is now is where it was on the previous turn, but it can jump to a new location.</div>',
 
     '<div style="font-size:21px; line-height:1.8; text-align:center;"><strong style="font-size:26px;">Best strategy</strong><br><br><strong>Place the box directly under where you think the drone is.</strong></div>' +
       mockRail(50, 54, { boxLocked: false, showDot: true, showLine: true, valence: 'reward', score: '', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Practice again</strong><br><br>Now play a few more turns and pay attention to<br><strong>how the drone moves</strong> and <strong>where the bag lands</strong>.</div>'
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Practice again</strong><br><br>Play a few more turns and pay attention to <strong>how the drone moves</strong> and <strong>where the bag lands</strong>.</div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
@@ -297,10 +306,10 @@ var inst3 = {
 var inst4 = {
   type: 'instructions',
   pages: [
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Important change for the real game</strong><br><br>You will <strong>not</strong> be able to see the drone.<br><br>You will only see the <strong>colored circle</strong> showing where the bag landed.</div>' +
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Important change for the real game</strong><br><br>You will <strong>not</strong> see the drone.<br>You will only see the <strong>colored circle</strong> showing where the bag landed.</div>' +
       mockRail(44, 57, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+6', showItem: false }),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;">You will still move the box the same way,<br>but now you must <strong>estimate where the drone is</strong> from where it has been.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;">You will still move the box the same way, but now you must <strong>estimate where the drone is</strong> from where it has been.</div>',
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Items will appear too</strong><br><br>Each turn, a distinct <strong>item</strong> will appear where the supplies land.</div>' +
       mockRail(50, 50, { boxLocked: true, showDot: true, showLine: false, valence: 'reward', score: '', showItem: true, item: '🎲' }),
@@ -315,14 +324,14 @@ var inst4 = {
 var inst5 = {
   type: 'instructions',
   pages: [
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">The full game</strong><br><br>There are <strong>4 environments</strong>.<br>Each has a different wind condition and a different drone movement pattern.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">The full game</strong><br><br>There are <strong>4 environments</strong>.<br>Each has a different movement pattern and scoring context.</div>',
 
-    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px; color:#0a7f2e;">In some environments:</strong><br><br><strong>Better placement = GAIN MORE points</strong><br><br>Each item you catch <strong>adds</strong> points.<br><span style="font-weight:bold; color:#0a7f2e;">GREEN = gain</span></div>',
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px; color:#0a7f2e;">In some environments:</strong><br><br><strong>Better placement = gain more</strong><br><br><span style="font-weight:bold; color:#0a7f2e;">GREEN = gain</span></div>',
 
-    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px; color:#b00020;">In other environments:</strong><br><br><strong>Better placement = LOSE FEWER points</strong><br><br>Each item you fail to catch <strong>costs</strong> points.<br><span style="font-weight:bold; color:#b00020;">RED = loss</span></div>' +
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px; color:#b00020;">In other environments:</strong><br><br><strong>Better placement = lose fewer</strong><br><br><span style="font-weight:bold; color:#b00020;">RED = loss</span></div>' +
       mockGainLossComparison(),
 
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong>Key idea:</strong><br><br>Always try to place the box as accurately as possible.<br>That helps you either <strong style="color:#0a7f2e;">gain more</strong> or <strong style="color:#b00020;">lose less</strong>.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong>Key idea:</strong><br><br>Always place the box as accurately as possible. That helps you either <strong style="color:#0a7f2e;">gain more</strong> or <strong style="color:#b00020;">lose less</strong>.</div>',
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;">You will be reminded whenever the environment changes.</div>'
   ],
@@ -334,7 +343,7 @@ var inst5 = {
 var inst6 = {
   type: 'instructions',
   pages: [
-    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Memory task</strong><br><br>After each of the 4 environments, you will complete a short memory task about the items that appeared.</div>',
+    '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:25px;">Memory task</strong><br><br>After each environment, you will complete a short memory task about the items that appeared.</div>',
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;">You may be asked:<br><br><strong>1.</strong> Which item appeared first<br><strong>2.</strong> How many items appeared between two items<br><strong>3.</strong> Where a middle item appeared between two items</div>',
 
@@ -348,7 +357,7 @@ var inst6 = {
         '<div style="width:84px;height:84px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(180,180,180,.35);display:flex;align-items:center;justify-content:center;font-size:42px;">🎲</div>' +
       '</div>',
 
-    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:24px;">Main priority</strong><br><br>You should notice the items,<br>but you do <strong>not</strong> need to memorize them perfectly.<br><br><strong>Your main goal is still to maximize your score by placing the box as accurately as possible.</strong></div>'
+    '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:24px;">Main priority</strong><br><br>You should notice the items, but you do <strong>not</strong> need to memorize them perfectly.<br><br><strong>Your main goal is still to maximize your score by placing the box accurately.</strong></div>'
   ],
   show_clickable_nav: true,
   button_label_previous: "Prev",
