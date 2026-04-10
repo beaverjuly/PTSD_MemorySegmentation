@@ -192,8 +192,8 @@ var inst_summary = {
       mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Loss scoring</strong><br><br>In some environments, good placement helps you <strong>lose fewer points</strong>.<br><br><strong style="font-size:24px; color:#b00020;">Perfect alignment = 0</strong><br><br>The farther away your box is, the more points you lose.</div>' +
-      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '0', showItem: false }) +
-      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-7', showItem: false }),
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '-3', showItem: false }) +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-10', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Next turn</strong><br><br>When the box becomes <strong>bright</strong> again, the next turn begins.</div>',
 
@@ -264,8 +264,8 @@ var inst2 = {
       mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Loss scoring</strong><br><br>In some environments, good placement helps you <strong>lose fewer points</strong>.<br><br><strong style="font-size:24px; color:#b00020;">Perfect alignment = 0</strong><br><br>If you are farther away, you lose more points.</div>' +
-      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '0', showItem: false }) +
-      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-7', showItem: false }),
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '-3', showItem: false }) +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-10', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Start of the next turn</strong><br><br>When the box becomes <strong>bright</strong> again, a new turn begins.</div>',
 
@@ -349,12 +349,12 @@ var inst6 = {
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;">For the slider question, you will see <strong>two items at the ends</strong> and the <strong>middle item above</strong>.<br>Move the slider to show when the middle item appeared relative to the other two.</div>' +
       '<div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;margin:18px auto 12px auto;width:82%;max-width:700px;">' +
-        '<div style="width:84px;height:84px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(180,180,180,.35);display:flex;align-items:center;justify-content:center;font-size:42px;">🪃</div>' +
+        '<div style="width:84px;height:84px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(180,180,180,.35);display:flex;align-items:center;justify-content:center;font-size:42px;">🌲</div>' +
         '<div style="flex:1;text-align:center;">' +
-          '<div style="margin-bottom:10px;font-size:42px;">🪴</div>' +
+          '<div style="margin-bottom:10px;font-size:42px;">🎤</div>' +
           '<input type="range" min="0" max="100" value="50" style="width:100%;">' +
         '</div>' +
-        '<div style="width:84px;height:84px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(180,180,180,.35);display:flex;align-items:center;justify-content:center;font-size:42px;">🎲</div>' +
+        '<div style="width:84px;height:84px;border-radius:12px;background:rgba(255,255,255,.12);border:2px solid rgba(180,180,180,.35);display:flex;align-items:center;justify-content:center;font-size:42px;">🍤</div>' +
       '</div>',
 
     '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:24px;">Main priority</strong><br><br>You should notice the items, but you do <strong>not</strong> need to memorize them perfectly.<br><br><strong>Your main goal is still to maximize your score by placing the box accurately.</strong></div>'

@@ -38,8 +38,11 @@ def write_data(session, json, method='pass'):
 
     ## Write data to disk.
     if method == 'pass':
-        fout = os.path.join(session['data'], '%s.json' %session['subId'])
+        fout = os.path.join(session['data'], '%s.json' % session['subId'])
     elif method == 'reject':
-        fout = os.path.join(session['reject'], '%s.json' %session['subId'])
+        fout = os.path.join(session['reject'], '%s.json' % session['subId'])
 
-    with open(fout, 'w') as f: f.write(json)
+    print(f"[SAVE_DATA] method={method} workerId={session.get('workerId')} subId={session.get('subId')} path={fout}")
+
+    with open(fout, 'w') as f:
+        f.write(json)

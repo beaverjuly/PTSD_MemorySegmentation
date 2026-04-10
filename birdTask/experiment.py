@@ -164,6 +164,8 @@ def pass_message():
 @bp.route('/redirect_success', methods=['POST'])
 def redirect_success():
     """Save complete jsPsych dataset to disk."""
+    print(f"[REDIRECT_SUCCESS] workerId={session.get('workerId')} subId={session.get('subId')}")
+
     if request.is_json:
         JSON = request.get_json()
         write_data(session, JSON, method='pass')
@@ -171,10 +173,11 @@ def redirect_success():
     write_metadata(session, ['complete', 'code_success'], 'a')
     return ('', 200)
 
-
 @bp.route('/redirect_reject', methods=['POST'])
 def redirect_reject():
     """Save rejected jsPsych dataset to disk."""
+    print(f"[REDIRECT_REJECT] workerId={session.get('workerId')} subId={session.get('subId')}")
+
     if request.is_json:
         JSON = request.get_json()
         write_data(session, JSON, method='reject')

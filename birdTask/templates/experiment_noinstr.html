@@ -314,9 +314,13 @@
   // ========================================================================
   function create_memory_timeline(blockNum) {
     var timeline = [];
-    var pairCount = (typeof PREDEFINED_PAIRS !== 'undefined' && Array.isArray(PREDEFINED_PAIRS))
-      ? PREDEFINED_PAIRS.length
-      : 0;
+    var pairList =
+      (typeof window !== 'undefined' && Array.isArray(window.PREDEFINED_PAIRS))
+        ? window.PREDEFINED_PAIRS
+        : [];
+    var pairCount = pairList.length;
+
+    console.log('[MEMORY] block=' + blockNum + ', pairCount=' + pairCount, pairList);
 
     timeline.push({
       type: 'html-keyboard-response',
@@ -325,16 +329,25 @@
       trial_duration: 15000
     });
 
-    for (var p = 0; p < pairCount; p++) {
+    if (pairCount === 0) {
       timeline.push({
-        type: 'memory-task',
-        pair_index: p + 1,
-        block_num: blockNum
+        type: 'html-keyboard-response',
+        stimulus: '<p style="font-size:22px; color:#b00020; text-align:center;"><strong>Memory task error:</strong><br><br>No predefined memory pairs were found.<br>Please check that <code>window.PREDEFINED_PAIRS</code> is defined before the memory timeline is built.</p>',
+        choices: jsPsych.ALL_KEYS
       });
+      return timeline;
     }
 
-    return timeline;
+  for (var p = 0; p < pairCount; p++) {
+    timeline.push({
+      type: 'memory-task',
+      pair_index: p + 1,
+      block_num: blockNum
+    });
   }
+
+  return timeline;
+}
 
   function seedFakeBirdData(blockNum, numTrials) {
     numTrials = numTrials || 50;
