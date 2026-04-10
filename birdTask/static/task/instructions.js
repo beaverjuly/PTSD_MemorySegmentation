@@ -192,8 +192,8 @@ var inst_summary = {
       mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Loss scoring</strong><br><br>In some environments, good placement helps you <strong>lose fewer points</strong>.<br><br><strong style="font-size:24px; color:#b00020;">Perfect alignment = 0</strong><br><br>The farther away your box is, the more points you lose.</div>' +
-      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '-3', showItem: false }) +
-      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-10', showItem: false }),
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '0', showItem: false }) +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-7', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Next turn</strong><br><br>When the box becomes <strong>bright</strong> again, the next turn begins.</div>',
 
@@ -264,8 +264,8 @@ var inst2 = {
       mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'reward', score: '+3', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.8; text-align:center;"><strong style="font-size:25px;">Loss scoring</strong><br><br>In some environments, good placement helps you <strong>lose fewer points</strong>.<br><br><strong style="font-size:24px; color:#b00020;">Perfect alignment = 0</strong><br><br>If you are farther away, you lose more points.</div>' +
-      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '-3', showItem: false }) +
-      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-10', showItem: false }),
+      mockRail(52, 52, { boxLocked: true, showDot: true, showLine: false, valence: 'loss', score: '0', showItem: false }) +
+      mockRail(36, 63, { boxLocked: true, showDot: true, showLine: true, valence: 'loss', score: '-7', showItem: false }),
 
     '<div style="font-size:20px; line-height:1.7; text-align:center;"><strong style="font-size:24px;">Start of the next turn</strong><br><br>When the box becomes <strong>bright</strong> again, a new turn begins.</div>',
 
