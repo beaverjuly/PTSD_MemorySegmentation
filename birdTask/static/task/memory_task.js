@@ -52,6 +52,25 @@ jsPsych.plugins['memory-task'] = (function() {
   var pairOrderByBlock = {};
   var pairProgressByBlock = {};
 
+  function getOrderLayoutMode() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var workerId = params.get('workerId') || params.get('subId') || '';
+
+      if (workerId) {
+        var hash = 0;
+        for (var i = 0; i < workerId.length; i++) {
+          hash += workerId.charCodeAt(i);
+        }
+        return (hash % 2 === 0) ? 'horizontal' : 'vertical';
+      }
+    } catch (e) {}
+
+    return jsPsych.randomization.sampleWithoutReplacement(['horizontal', 'vertical'], 1)[0];
+  }
+
+var ORDER_LAYOUT_MODE = getOrderLayoutMode();
+
   function nextPairForBlock(block) {
     if (!pairOrderByBlock.hasOwnProperty(block)) {
       pairOrderByBlock[block] = jsPsych.randomization.shuffle(PREDEFINED_PAIRS.slice());
@@ -140,6 +159,24 @@ jsPsych.plugins['memory-task'] = (function() {
     return p;
   }
 
+  function makeChoiceColumn(stim, labelText) {
+    var col = document.createElement('div');
+    col.style.cssText =
+      'display:flex;flex-direction:column;align-items:center;gap:10px;';
+
+    var stimCard = createStimCard(stim, 'medium');
+
+    var label = document.createElement('div');
+    label.style.cssText =
+      'font-size:24px;font-weight:bold;color:#333;';
+    label.textContent = labelText;
+
+    col.appendChild(stimCard.card);
+    col.appendChild(label);
+
+    return { col: col, cardObj: stimCard };
+  }
+
   function waitForCardAssets(cards, onReady) {
     var total = cards.length;
     var loaded = 0;
@@ -211,6 +248,7 @@ jsPsych.plugins['memory-task'] = (function() {
         condition: _condition,
         skipped_pair: true,
         pair_index: trial.pair_index,
+        order_layout_mode: ORDER_LAYOUT_MODE,
         trial1_index: null,
         trial2_index: null,
         stim_left_img: null,
@@ -279,28 +317,23 @@ jsPsych.plugins['memory-task'] = (function() {
       wrap.appendChild(createStepLabel('Which came first?'));
 
       var pairWrap = document.createElement('div');
-      pairWrap.className = 'b3-pair-vertical';
-      pairWrap.style.cssText =
-        'display:flex;flex-direction:column;align-items:center;gap:20px;margin-bottom:20px;';
+      var isHorizontal = ORDER_LAYOUT_MODE === 'horizontal';
 
-      var top = createStimCard(left_img, 'medium');
-      var topLabel = document.createElement('div');
-      topLabel.style.cssText = 'font-size:24px;font-weight:bold;margin-top:10px;color:#333;';
-      topLabel.textContent = '1';
-      top.card.appendChild(topLabel);
+      pairWrap.className = isHorizontal ? 'b3-pair-horizontal' : 'b3-pair-vertical';
+      pairWrap.style.cssText = isHorizontal
+        ? 'display:flex;flex-direction:row;justify-content:center;align-items:flex-start;gap:56px;margin-bottom:20px;flex-wrap:wrap;'
+        : 'display:flex;flex-direction:column;align-items:center;gap:20px;margin-bottom:20px;';
 
-      var bot = createStimCard(right_img, 'medium');
-      var botLabel = document.createElement('div');
-      botLabel.style.cssText = 'font-size:24px;font-weight:bold;margin-top:10px;color:#333;';
-      botLabel.textContent = '2';
-      bot.card.appendChild(botLabel);
+      var firstChoice = makeChoiceColumn(left_img, '1');
+      var secondChoice = makeChoiceColumn(right_img, '2');
 
-      pairWrap.appendChild(top.card);
-      pairWrap.appendChild(bot.card);
+      pairWrap.appendChild(firstChoice.col);
+      pairWrap.appendChild(secondChoice.col);
       wrap.appendChild(pairWrap);
 
       var instrWrap = document.createElement('div');
-      instrWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;min-height:110px;';
+      instrWrap.style.cssText =
+        'display:flex;flex-direction:column;align-items:center;min-height:110px;';
       instrWrap.appendChild(createSubtext('Press 1 or 2 to select.'));
       wrap.appendChild(instrWrap);
 
@@ -309,7 +342,7 @@ jsPsych.plugins['memory-task'] = (function() {
 
       var start_time = performance.now();
 
-      waitForCardAssets([top, bot], function() {
+      waitForCardAssets([firstChoice.cardObj, secondChoice.cardObj], function() {
         wrap.style.visibility = 'visible';
       });
 

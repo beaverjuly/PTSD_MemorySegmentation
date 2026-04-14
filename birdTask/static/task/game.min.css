@@ -180,7 +180,7 @@
     0 3px 8px rgba(0, 0, 0, 0.35);
   z-index: 11;
   pointer-events: none;
-  animation: bagAppear 0.25s ease-out;
+  animation: bagDrop 0.5s cubic-bezier(0.22, 0.8, 0.3, 1);;
 }
 
 .bag-dot.reward {
@@ -205,7 +205,7 @@
   top: 63%;
   transform: translateX(-50%);
   z-index: 15;
-  font-size: clamp(22px, 2.5vw, 32px);
+  font-size: clamp(30px, 3.5vw, 46px);
   font-weight: 800;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   text-shadow:
@@ -218,11 +218,11 @@
 /* ── Stimulus emoji card ── */
 .stimulus-card {
   position: absolute;
-  top: 30%;
+  top: 24%;
   transform: translateX(-50%);
   z-index: 14;
-  width: 200px;
-  height: 200px;
+  width: 250px;
+  height: 250px;
   background: rgba(255, 255, 255, 0.12);
   border: 2px solid rgba(255, 255, 255, 0.22);
   border-radius: 14px;
@@ -235,8 +235,11 @@
 }
 
 .stimulus-card .emoji-stim {
-  font-size: 60px;
+  font-size: 125px;
   line-height: 1;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Drone (practice only) ── */
@@ -275,12 +278,16 @@
 }
 
 /* ── Animations ── */
-@keyframes bagAppear {
-  from {
-    transform: translate(-50%, -50%) scale(0.3);
+@keyframes bagDrop {
+  0% {
+    transform: translate(-50%, -450%) scale(0.7);
     opacity: 0;
   }
-  to {
+  70% {
+    transform: translate(-50%, -42%) scale(1.04);
+    opacity: 1;
+  }
+  100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }

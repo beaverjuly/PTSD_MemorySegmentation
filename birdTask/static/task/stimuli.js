@@ -54,6 +54,76 @@ var main_bird_position = [
 	[60,55.457,63.725,63.725,50.649,50.649,50.649,50.649,50.649,50.649,50.649,29.859,29.859,29.859,35.99,35.99,35.99,35.99,12.81,12.81,35.24,35.24,35.24,35.24,62.424,62.424,39.089,39.089,39.089,39.089,39.089,46.178,46.178,46.178,46.178,46.178,59.564,59.564,59.564,72.844,72.844,72.844,72.844,72.844,72.844,64.759,64.759,49.34,49.34,55.824],
 ];
 
+function clampSeqValue(x, minVal, maxVal) {
+  return Math.max(minVal, Math.min(maxVal, x));
+}
+
+function shiftSequence(seq, delta, minVal, maxVal) {
+  return seq.map(function(x) {
+    return clampSeqValue(x + delta, minVal, maxVal);
+  });
+}
+
+// base latent sequences
+var highVol_base_bird = main_bird_position[0].slice();
+var lowVol_base_bird  = main_bird_position[1].slice();
+
+var highVol_base_bag = main_bag_position[0].slice();
+var lowVol_base_bag  = main_bag_position[1].slice();
+
+// Uniform shifts applied to the whole sequence
+// Adjust these for more or less separation between reward and loss blocks.
+var HIGHVOL_SHIFT_DELTA = 6;
+var LOWVOL_SHIFT_DELTA  = -4;
+
+// Shifted variants
+// Shift both bird and bag by the SAME delta so the task structure stays unchanged.
+var highVol_shifted_bird = shiftSequence(highVol_base_bird, HIGHVOL_SHIFT_DELTA, 10, 90);
+var highVol_shifted_bag  = shiftSequence(highVol_base_bag,  HIGHVOL_SHIFT_DELTA, 10, 90);
+
+var lowVol_shifted_bird = shiftSequence(lowVol_base_bird, LOWVOL_SHIFT_DELTA, 10, 90);
+var lowVol_shifted_bag  = shiftSequence(lowVol_base_bag,  LOWVOL_SHIFT_DELTA, 10, 90);
+
+// Randomize whether REWARD blocks use shifted sequences or LOSS blocks use shifted sequences.
+// This is evaluated once at page load, so it stays fixed within a participant.
+var reward_uses_shifted_sequences = Math.random() < 0.5;
+
+// Assemble the 4 block-specific sequences conditionally.
+// Block 1: reward, high vol / low stc
+// Block 2: reward, low vol / high stc
+// Block 3: loss,   high vol / low stc
+// Block 4: loss,   low vol / high stc
+if (reward_uses_shifted_sequences) {
+  main_bird_position = [
+    highVol_shifted_bird.slice(), // block 1 reward highVol
+    lowVol_shifted_bird.slice(),  // block 2 reward lowVol
+    highVol_base_bird.slice(),    // block 3 loss highVol
+    lowVol_base_bird.slice()      // block 4 loss lowVol
+  ];
+
+  main_bag_position = [
+    highVol_shifted_bag.slice(), // block 1 reward highVol
+    lowVol_shifted_bag.slice(),  // block 2 reward lowVol
+    highVol_base_bag.slice(),    // block 3 loss highVol
+    lowVol_base_bag.slice()      // block 4 loss lowVol
+  ];
+} else {
+  main_bird_position = [
+    highVol_base_bird.slice(),    // block 1 reward highVol
+    lowVol_base_bird.slice(),     // block 2 reward lowVol
+    highVol_shifted_bird.slice(), // block 3 loss highVol
+    lowVol_shifted_bird.slice()   // block 4 loss lowVol
+  ];
+
+  main_bag_position = [
+    highVol_base_bag.slice(),    // block 1 reward highVol
+    lowVol_base_bag.slice(),     // block 2 reward lowVol
+    highVol_shifted_bag.slice(), // block 3 loss highVol
+    lowVol_shifted_bag.slice()   // block 4 loss lowVol
+  ];
+}
+console.log("[stimuli] reward_uses_shifted_sequences =", reward_uses_shifted_sequences);
+
 var SLIDER_PAIRS = [[2,4],[11,13],[16,18],[22,24],[34,36],[39,41]];
 var BOUNDARY_MIDDLE_PAIRS = [[2,4],[11,13],[39,41]];
 var NONBOUNDARY_MIDDLE_PAIRS = [[16,18],[22,24],[34,36]];

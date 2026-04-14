@@ -303,16 +303,16 @@ jsPsych.plugins["trial"] = (function () {
   }
 
   function computeCaptureCount(distance) {
-    if (distance <= 1.0) return 10;
-    if (distance <= 2.0) return 9;
-    if (distance <= 3.0) return 8;
-    if (distance <= 4.0) return 7;
-    if (distance <= 5.0) return 6;
-    if (distance <= 6.5) return 5;
-    if (distance <= 8.0) return 4;
-    if (distance <= 9.5) return 3;
-    if (distance <= 11.0) return 2;
-    if (distance <= 13.0) return 1;
+    if (distance <= 1.5) return 10;
+    if (distance <= 3.0) return 9;
+    if (distance <= 4.5) return 8;
+    if (distance <= 6.0) return 7;
+    if (distance <= 7.5) return 6;
+    if (distance <= 9.0) return 5;
+    if (distance <= 10.5) return 4;
+    if (distance <= 12.0) return 3;
+    if (distance <= 14.0) return 2;
+    if (distance <= 16.0) return 1;
     return 0;
   }
 
